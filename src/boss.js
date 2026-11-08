@@ -184,7 +184,7 @@ export class Warden {
       -Math.cos(this.time * 0.37 * rage) * 0.18 + (this.stagger > 0 ? Math.sin(this.time * 23) * 0.1 : 0)
     );
     this.group.updateMatrixWorld(true);
-    this.light.intensity = 900 + Math.sin(this.time * 6) * 300;
+    this.light.intensity = 700 + Math.sin(this.time * 1.5) * 150;
 
     // cores swing & tether cutting
     const T = game.tetherState;
@@ -197,7 +197,7 @@ export class Warden {
       c.core.getWorldPosition(c.pos);
       c.core.rotation.y += dt * 2;
       c.flash = Math.max(0, c.flash - dt * 4);
-      c.shield.material.opacity = 0.18 + c.flash * 0.5 + Math.random() * 0.05;
+      c.shield.material.opacity = 0.18 + c.flash * 0.25;
       if (T.on && distPointSegment(c.pos, A, B) < 3.4 + (T.sync ? 2.5 : 0)) {
         c.cut += dt * (T.sync ? 6 : 1);
         c.flash = 1;

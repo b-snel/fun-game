@@ -104,7 +104,7 @@ export function buildShipMesh(color) {
     blending: THREE.AdditiveBlending,
     vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix*modelViewMatrix*vec4(position,1.0);} `,
     fragmentShader: `uniform vec3 uColor; uniform float uPow; uniform float uTime; varying vec2 vUv;
-      void main(){ float t = vUv.y; float flick = 0.8 + 0.2*sin(uTime*80.0 + vUv.x*20.0);
+      void main(){ float t = vUv.y; float flick = 1.0;
         vec3 c = mix(uColor*3.0, vec3(4.0,4.0,4.5), pow(t, 4.0));
         gl_FragColor = vec4(c * pow(t, 1.5) * uPow * flick, 1.0); }`,
   });
@@ -187,7 +187,7 @@ export class Player {
     if (!this.vulnerable) return false;
     this.hull -= amount;
     this.hitFlash = 1;
-    this.shake = Math.min(2.2, this.shake + amount / 12);
+    this.shake = Math.min(1.2, this.shake + amount / 25);
     this.invuln = 0.25;
     this.lastHitT = game.time;
     game.input.rumble(this.dev, 0.9, 0.6, 180 + amount * 6);
@@ -302,7 +302,7 @@ export class Player {
       if (this.hull <= 0) { this.hull = 0; game.onPlayerDowned(this); }
     }
     this.vs *= 0.97;
-    this.shake = Math.min(1.5, this.shake + 0.35);
+    this.shake = Math.min(0.6, this.shake + 0.15);
     _p.copy(this.pos).addScaledVector(normal, 1.2);
     FX.sparkBurst(_p, _n.copy(normal).negate().addScaledVector(this.forward, -1.2), 22, _c.setRGB(6, 3.5, 1.2), 35, 0.7, this.vel);
     game.input.rumble(this.dev, 0.6, 0.9, 120);
@@ -339,11 +339,12 @@ export class Player {
     tr.toWorld(this.camS, cx, cy, this.camera.position);
     tr.toWorld(this.s + 30, this.x * 0.55, this.y * 0.7 + 1.2, _look);
     // shake
-    const sh = this.shake * this.shake * 0.6 + (this.boosting ? 0.04 : 0) + (this.syncT > 0 ? 0.12 : 0) + game.globalShake;
-    if (sh > 0) {
-      this.camera.position.x += rand(-sh, sh);
-      this.camera.position.y += rand(-sh, sh);
-      this.camera.position.z += rand(-sh, sh);
+    // smooth, low-frequency shake (no per-frame random jitter)
+    const sh = this.shake * this.shake * 0.35 + game.globalShake * 0.5;
+    if (sh > 0.001) {
+      const t = game.time;
+      this.camera.position.addScaledVector(this.right, sh * (Math.sin(t * 13.1) * 0.6 + Math.sin(t * 7.3 + 1.7) * 0.4));
+      this.camera.position.addScaledVector(this.up, sh * (Math.sin(t * 11.7 + 0.5) * 0.6 + Math.sin(t * 5.9 + 2.3) * 0.4));
     }
     tr.sample(this.camS + 6, _fr2);
     this.camera.up.copy(_fr2.up).addScaledVector(_fr2.right, -this.bank * 0.12);
@@ -352,7 +353,7 @@ export class Player {
   }
 
   updateProjection(aspect) {
-    const hfov = 98 + this.fovKick * 14 + Math.max(0, this.vs - 80) * 0.08;
+    const hfov = 96 + this.fovKick * 7 + Math.max(0, this.vs - 80) * 0.04;
     const v = 2 * Math.atan(Math.tan((hfov * Math.PI) / 360) / aspect) * (180 / Math.PI);
     this.camera.fov = clamp(v, 30, 78 + this.fovKick * 8);
     this.camera.aspect = aspect;
@@ -365,7 +366,7 @@ export class Player {
     const pow = 0.6 + boost * 1.2 + (this.syncT > 0 ? 1.5 : 0);
     ud.flameMat.uniforms.uPow.value = pow;
     ud.flameMat.uniforms.uTime.value = game.time;
-    for (const f of ud.flames) f.scale.set(1 + boost * 0.3, 1 + boost * 0.3, 1.8 + boost * 3.5 + (this.syncT > 0 ? 4 : 0) + Math.random() * 0.4);
+    for (const f of ud.flames) f.scale.set(1 + boost * 0.3, 1 + boost * 0.3, 1.8 + boost * 3.5 + (this.syncT > 0 ? 4 : 0));
     // engine trails (world space)
     const body = ud.body;
     body.updateWorldMatrix(true, false);
@@ -398,13 +399,13 @@ export class Player {
     this.pitch = Math.sin(game.time * 2) * 0.2;
     this._place(dt);
     this._updateCamera(dt, game);
-    this.mesh.userData.flameMat.uniforms.uPow.value = Math.random() < 0.2 ? 0.4 : 0.0;
+    this.mesh.userData.flameMat.uniforms.uPow.value = 0.15;
     for (const t of this.trails) t.push(this.pos, this.up, 0);
     if (Math.random() < 0.7) {
       FX.smoke.spawn(this.pos.x, this.pos.y, this.pos.z, this.vel.x * 0.7, this.vel.y * 0.7 + 3, this.vel.z * 0.7, 0.06, 0.06, 0.06, 2, 1.4, { grow: 2.5, alpha: 0.7 });
       FX.spark(this.pos, _v.copy(this.vel).multiplyScalar(0.8).add(_n.randomDirection().multiplyScalar(6)), _c.setRGB(6, 2, 0.4), 0.7, 0.4);
     }
-    this.light.intensity = Math.random() < 0.15 ? 60 : 5;
+    this.light.intensity = 15 + 10 * Math.sin(game.time * 3);
   }
 }
 

@@ -29,11 +29,11 @@ export class TetherFX {
             float y = vUv.y;
             vec3 c = mix(uA, uB, smoothstep(0.15, 0.85, y));
             c = mix(c, vec3(1.0, 0.12, 0.08), uStrain);
-            float pulse = 0.55 + 0.45*sin(y*uLen*0.9 - uTime*50.0);
-            float pulse2 = 0.5 + 0.5*sin(y*uLen*0.23 + uTime*17.0);
+            float pulse = 0.8 + 0.2*sin(y*uLen*0.25 - uTime*8.0);
+            float pulse2 = 0.85 + 0.15*sin(uTime*2.0);
             float rim = abs(dot(vN, vV));
             float core = uW < 0.5 ? pow(rim, 0.6) : pow(rim, 2.5) * 0.45;
-            float flick = 1.0 - uStrain * step(0.6, fract(sin(uTime*91.0)*43758.5));
+            float flick = 1.0 - uStrain * 0.25 * (0.5 + 0.5*sin(uTime*6.0));
             vec3 col = (uW < 0.5 ? mix(c, vec3(1.0), 0.45) * 1.5 : c * 1.1) * core * (0.6 + 0.4*pulse + 0.3*pulse2) * flick;
             gl_FragColor = vec4(col * uAlpha * smoothstep(2.0, 9.0, vDepth), 1.0);
           }`,
@@ -91,7 +91,7 @@ export class TetherFX {
     const visLen = state.on ? len : len * state.form;
     _mid.copy(a).addScaledVector(_d, visLen / len / 2);
     _q.setFromUnitVectors(_y, _d.clone().normalize());
-    const pulse = 1 + Math.sin(time * 30) * 0.1;
+    const pulse = 1;
     this.core.position.copy(_mid);
     this.core.quaternion.copy(_q);
     this.core.scale.set(0.09 * pulse, visLen, 0.09 * pulse);
@@ -110,15 +110,24 @@ export class TetherFX {
     if (Math.abs(_dir.y) > 0.9) _p1.set(1, 0, 0);
     _p1.cross(_dir).normalize();
     _p2.crossVectors(_dir, _p1).normalize();
-    const amp = 0.5 + state.strain * 2.2 + (state.sync ? 1.5 : 0);
+    const amp = 0.35 + state.strain * 1.2 + (state.sync ? 0.8 : 0);
+    // re-shape arcs ~12x/sec with eased offsets instead of re-randomising every frame
+    this.arcT = (this.arcT || 0) + dt;
+    const reshape = this.arcT > 0.085;
+    if (reshape) this.arcT = 0;
+    if (!this.offs) { this.offs = []; for (let k = 0; k < ARCS * K * 2; k++) this.offs.push({ c: 0, t: 0 }); }
+    const ease = 1 - Math.exp(-14 * dt);
     for (let k = 0; k < ARCS; k++) {
       const arr = this.arcs[k].geometry.attributes.position.array;
       const w = 0.05;
       for (let i = 0; i < K; i++) {
         const t = i / (K - 1);
         const env = Math.sin(Math.PI * t);
-        const ox = (Math.random() * 2 - 1) * amp * env;
-        const oy = (Math.random() * 2 - 1) * amp * env;
+        const oA = this.offs[(k * K + i) * 2], oB = this.offs[(k * K + i) * 2 + 1];
+        if (reshape) { oA.t = Math.random() * 2 - 1; oB.t = Math.random() * 2 - 1; }
+        oA.c += (oA.t - oA.c) * ease; oB.c += (oB.t - oB.c) * ease;
+        const ox = oA.c * amp * env;
+        const oy = oB.c * amp * env;
         _p.copy(a).addScaledVector(_d, t * (visLen / len)).addScaledVector(_p1, ox).addScaledVector(_p2, oy);
         const o = i * 12;
         arr[o] = _p.x + _p1.x * w; arr[o + 1] = _p.y + _p1.y * w; arr[o + 2] = _p.z + _p1.z * w;
@@ -127,7 +136,6 @@ export class TetherFX {
         arr[o + 9] = _p.x - _p2.x * w; arr[o + 10] = _p.y - _p2.y * w; arr[o + 11] = _p.z - _p2.z * w;
       }
       this.arcs[k].geometry.attributes.position.needsUpdate = true;
-      this.arcs[k].visible = Math.random() < 0.75;
     }
   }
 }

@@ -304,7 +304,7 @@ export class Enemies {
       h.mesh.position.copy(h.pos);
       h.mesh.rotation.x += h.spin.x * dt;
       h.mesh.rotation.y += h.spin.y * dt;
-      h.ring.material.opacity = 0.5 + 0.5 * Math.sin(game.time * 20);
+      h.ring.material.opacity = 0.75 + 0.25 * Math.sin(game.time * 5);
       if (h.shell) FX.spark(h.pos, _v.set(0, 20, 0), _c.setRGB(8, 3, 0.6), 2.5, 0.12, { drag: 0 });
       else if (Math.random() < 0.5) FX.smoke.spawn(h.pos.x, h.pos.y, h.pos.z, 0, 5, 0, 0.1, 0.08, 0.07, 3, 1, { grow: 2, alpha: 0.6 });
       let gone = false;
@@ -320,7 +320,7 @@ export class Enemies {
           game.audio.explode(1.2);
           for (const pl of players) {
             const d = pl.pos.distanceTo(h.pos);
-            if (d < 30) { pl.shake = Math.min(2, pl.shake + (30 - d) / 25); game.input.rumble(pl.dev, 0.7 * (1 - d / 30), 0.4, 200); }
+            if (d < 30) { pl.shake = Math.min(1, pl.shake + (30 - d) / 50); game.input.rumble(pl.dev, 0.7 * (1 - d / 30), 0.4, 200); }
           }
           if (!h.shell) for (let k = 0; k < 12; k++) FX.smoke.spawn(h.pos.x, h.pos.y, h.pos.z, rand(-15, 15), rand(2, 10), rand(-15, 15), 0.12, 0.1, 0.09, 5, 2, { grow: 2.5, alpha: 0.7 });
         }

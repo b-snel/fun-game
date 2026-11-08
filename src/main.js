@@ -25,7 +25,7 @@ class Game {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.15;
+    renderer.toneMappingExposure = 1.0;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.autoClear = true;
     document.body.prepend(renderer.domElement);
@@ -127,8 +127,8 @@ class Game {
       r.setViewport(0, 0, this.W, this.H);
       r.setScissor(0, 0, this.W, this.H);
       FX.viewH = rc.h * r.getPixelRatio();
-      post.u.uSpeed.value = 0.25;
-      post.u.uAberr.value = 0.1;
+      post.u.uSpeed.value = 0;
+      post.u.uAberr.value = 0;
       post.u.uDamage.value = 0;
       post.u.uStatic.value = 0;
       post.u.uFlash.value = 0;
@@ -149,10 +149,10 @@ class Game {
       FX.viewH = rc.h * r.getPixelRatio();
       const u = this.posts[i].u;
       const boost = (p.boosting ? 0.6 : 0) + (p.syncT > 0 ? 1 : 0);
-      u.uSpeed.value = clamp((p.vs - 70) / 110, 0, 1) * 0.8 + boost;
-      u.uAberr.value = p.hitFlash * 1.5 + (p.syncT > 0 ? 0.8 : 0) + boost * 0.3;
-      u.uDamage.value = p.hitFlash * 0.9 + (p.hull < 30 && !p.downed ? (0.25 + 0.2 * Math.sin(this.time * 8)) : 0);
-      u.uStatic.value = p.downed ? 0.55 + Math.random() * 0.15 : (this.state === 'failed' ? 0.8 : 0);
+      u.uSpeed.value = clamp((p.vs - 90) / 110, 0, 1) * 0.5 + boost * 0.5;
+      u.uAberr.value = p.hitFlash * 0.6;
+      u.uDamage.value = p.hitFlash * 0.7 + (p.hull < 30 && !p.downed ? 0.25 : 0);
+      u.uStatic.value = p.downed ? 0.6 : (this.state === 'failed' ? 0.7 : 0);
       u.uFlash.value = this.flash;
       u.uAlarm.value = this.alarm || 0;
       u.uTime.value = this.time;
@@ -389,8 +389,8 @@ class Game {
     this.score += 5000 * Math.max(1, this.combo);
     this.hud.bigMsg(left ? `CORE SEVERED · ${left} LEFT` : 'ALL CORES SEVERED', 'sync', 2);
     this.slow(0.25, 0.7);
-    this.globalShake = 0.8;
-    this.world.flash = 1;
+    this.globalShake = 0.35;
+    this.world.flash = 0.4;
     for (const p of this.players) this.input.rumble(p.dev, 1, 1, 700);
   }
 
@@ -401,9 +401,9 @@ class Game {
   onBossDead(pos) {
     this.score += 25000;
     this.slow(0.2, 1.4);
-    this.globalShake = 1.6;
-    this.flash = 0.45;
-    this.world.flash = 1.2;
+    this.globalShake = 0.6;
+    this.flash = 0.12;
+    this.world.flash = 0.5;
     for (const p of this.players) this.input.rumble(p.dev, 1, 1, 1500);
     this.hud.bigMsg('WARDEN DOWN', 'sync', 2.5);
     setTimeout(() => {
@@ -480,7 +480,7 @@ class Game {
     this.time += dt;
     this.globalShake = Math.max(0, this.globalShake - rawDt * 1.2);
     this.flash = Math.max(0, this.flash - rawDt * (this.state === 'victory' ? -0.6 : 1.8));
-    if (this.state === 'victory') this.flash = Math.min(0.85, this.flash);
+    if (this.state === 'victory') this.flash = Math.min(0.5, this.flash);
 
     if (this.state === 'title') this.updateTitle(rawDt);
     else this.updateGame(dt, rawDt);
@@ -712,7 +712,7 @@ class Game {
     }
     this.audio.sync();
     this.slow(0.3, 0.35);
-    this.flash = 0.55;
+    this.flash = 0.12;
     this.hud.bigMsg('SYNC BURST', 'sync', 1.6);
     this.tetherState.on = true;
     this.tetherState.form = 1;
@@ -800,7 +800,7 @@ class Game {
     if (p.invuln > 0.3) return false;
     p.hull -= p.rolling ? dmg * 0.6 : dmg;
     p.hitFlash = 1;
-    p.shake = 2.2;
+    p.shake = 1.2;
     p.invuln = 0.6;
     p.lastHitT = this.time;
     p.vs *= 0.55;
@@ -894,7 +894,7 @@ class Game {
         for (const o of [beam, glow]) { o.rotation.set(0, 0, 0); o.position.set(b.x, h / 2, 0); o.scale.set(1, h, 1); }
         e1.position.set(b.x, 0.4, 0); e2.position.set(b.x, h, 0);
       }
-      glow.material.opacity = 0.6 + Math.random() * 0.4;
+      glow.material.opacity = 0.75;
       // crossing test
       for (const p of this.players) {
         if (p.downed) continue;
@@ -967,7 +967,7 @@ class Game {
           p.lastHitT = this.time;
           if (p.hull <= 0) { p.hull = 0; this.onPlayerDowned(p); }
         }
-        p.shake = Math.max(p.shake, 1.6);
+        p.shake = Math.max(p.shake, 0.8);
         p.vs = Math.max(p.vs, sec.speed);
         this.input.rumble(p.dev, 0.9, 0.9, 100);
         if (Math.random() < 0.1) this.hud.popup(p.id, 'GET OUT OF THERE', 'warn');
@@ -994,10 +994,9 @@ class Game {
           d.life = rand(1.5, 2.5);
           d.s = rand(1.5, 3.5);
         }
-        this.world.flash = Math.max(this.world.flash, 0.4 * (1 - this.collapseDist / 220));
+        this.world.flash = Math.max(this.world.flash, 0.15 * (1 - this.collapseDist / 220));
       }
-      for (const p of alive) p.shake = Math.max(p.shake, (1 - this.collapseDist / 220) * 0.8);
-      this.globalShake = Math.max(this.globalShake, (1 - this.collapseDist / 220) * 0.15);
+      for (const p of alive) p.shake = Math.max(p.shake, (1 - this.collapseDist / 220) * 0.45);
     }
   }
 

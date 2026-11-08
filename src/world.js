@@ -138,7 +138,7 @@ export class World {
     this.flash = Math.max(0, this.flash - dt * 3);
 
     const fc = _c2.copy(this.cur.fogC);
-    if (this.flash > 0) fc.lerp(_c.setRGB(1, 0.5, 0.2), Math.min(0.5, this.flash * 0.4));
+    if (this.flash > 0) fc.lerp(_c.setRGB(0.5, 0.25, 0.1), Math.min(0.25, this.flash * 0.2));
     this.scene.fog.color.copy(fc);
     this.scene.fog.density = this.cur.density;
     this.scene.background.copy(fc);
@@ -146,7 +146,7 @@ export class World {
     this.skyUniforms.uHorizon.value.copy(this.cur.horC);
     this.skyUniforms.uTime.value = time;
     this.hemi.color.copy(this.cur.hemiC);
-    this.hemi.intensity = 0.8 + this.flash;
+    this.hemi.intensity = 0.8 + this.flash * 0.3;
     this.moon.intensity = this.mood === 'dawn' ? 2.2 : 0.9;
     this.moon.color.set(this.mood === 'dawn' ? 0xffc890 : 0xb0c4ff);
     this.moon.target.position.copy(center);
@@ -155,7 +155,7 @@ export class World {
     this.rainUniforms.uCenter.value.copy(center);
     this.rainUniforms.uVel.value.copy(vel);
     this.rainUniforms.uTime.value = time;
-    this.rainUniforms.uAlpha.value = this.cur.rain * 0.55;
+    this.rainUniforms.uAlpha.value = this.cur.rain * 0.3;
     this.rain.visible = this.cur.rain > 0.01;
   }
 }

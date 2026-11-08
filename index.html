@@ -32,7 +32,7 @@
   .partner { position: absolute; left: 0; top: 0; display: none; }
   .partner .dia { position: absolute; left: -7px; top: -7px; width: 14px; height: 14px; border: 2px solid var(--other); transform: rotate(45deg); box-shadow: 0 0 10px var(--other); }
   .partner span { position: absolute; left: 14px; top: -10px; white-space: nowrap; font: 700 13px 'Chakra Petch'; color: var(--other); letter-spacing: 1px; text-shadow: 0 0 6px rgba(0,0,0,0.9); }
-  .partner.down .dia, .parrow.down div { border-color: var(--red); animation: blink 0.4s infinite; }
+  .partner.down .dia, .parrow.down div { border-color: var(--red); animation: blink 1.4s ease-in-out infinite; }
   .partner.down span { color: var(--red); }
   .parrow { position: absolute; left: 0; top: 0; display: none; }
   .parrow div { position: absolute; left: -12px; top: -12px; width: 24px; height: 24px; border-top: 3px solid var(--other); border-right: 3px solid var(--other); border-radius: 2px; transform-origin: 50% 50%; }
@@ -45,7 +45,7 @@
   .bar { position: relative; height: 8px; background: rgba(255,255,255,0.08); transform: skewX(-20deg); overflow: hidden; }
   .bar > div { height: 100%; width: 100%; background: var(--fg); transition: width 0.12s; }
   .bar.hull > div { background: linear-gradient(90deg, #cfd8e0, #fff); }
-  .bar.hull > div.low { background: var(--red); animation: blink 0.5s infinite; }
+  .bar.hull > div.low { background: var(--red); animation: blink 1.4s ease-in-out infinite; }
   .bar.energy > div { background: var(--pc); opacity: 0.55; box-shadow: 0 0 10px var(--pc); }
   .bar.energy > div.ok { opacity: 1; }
   .bar .mark { position: absolute; left: 30%; top: 0; bottom: 0; width: 2px; background: rgba(0,0,0,0.6); }
@@ -55,8 +55,8 @@
   .view.boosting .speed b { color: var(--pc); text-shadow: 0 0 18px var(--pc); }
   .tether { position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%); font: 600 12px 'Chakra Petch'; letter-spacing: 3px; white-space: nowrap; }
   .tether.ok { color: var(--dim); }
-  .tether.strain { color: var(--red); animation: blink 0.25s infinite; }
-  .tether.off { color: #ffcf40; animation: blink 0.6s infinite; }
+  .tether.strain { color: var(--red); animation: blink 1.4s ease-in-out infinite; }
+  .tether.off { color: #ffcf40; animation: blink 1.4s ease-in-out infinite; }
   .syncready { position: absolute; left: 50%; bottom: 36px; transform: translateX(-50%); font: 700 11px 'Chakra Petch'; letter-spacing: 4px;
     color: #fff; opacity: 0; transition: opacity 0.3s; text-shadow: 0 0 10px #fff; }
   .syncready.on { opacity: 0.75; }
@@ -71,18 +71,17 @@
     80% { opacity: 1; } 100% { transform: translate(-50%, -50px); opacity: 0; } }
   .downed { position: absolute; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 10px; }
   .downed.on { display: flex; }
-  .downed .t1 { font: 700 40px 'Chakra Petch'; letter-spacing: 8px; color: var(--red); animation: blink 0.8s infinite; }
+  .downed .t1 { font: 700 40px 'Chakra Petch'; letter-spacing: 8px; color: var(--red); animation: blink 1.4s ease-in-out infinite; }
   .downed .t2 { font: 600 14px 'Chakra Petch'; letter-spacing: 3px; color: var(--fg); }
   .downed .bar { width: 240px; height: 10px; }
   .downed .bar > div { background: #8dff9a; width: 0; transition: none; }
   .vwarn { position: absolute; left: 50%; top: 22%; transform: translateX(-50%); font: 700 16px 'Chakra Petch'; letter-spacing: 4px; color: var(--red);
     opacity: 0; white-space: nowrap; text-shadow: 0 0 12px rgba(255,59,47,0.7); }
-  .vwarn.on { opacity: 1; animation: blink 0.3s infinite; }
+  .vwarn.on { opacity: 1; animation: blink 1.4s ease-in-out infinite; }
   .cut { position: absolute; left: 50%; top: 62%; transform: translateX(-50%); display: none; text-align: center; }
   .cut.on { display: block; }
   .cut .t { font: 700 14px 'Chakra Petch'; letter-spacing: 4px; color: #9fe0ff; margin-bottom: 6px; }
   .cut .bar { width: 200px; height: 8px; } .cut .bar > div { background: #9fe0ff; width: 0; transition: none; }
-  .view.hit { animation: hitshake 0.15s; }
   @keyframes hitshake { 25% { transform: translate(4px, -2px); } 75% { transform: translate(-3px, 2px); } }
   .center-stats { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); text-align: center; z-index: 3;
     background: rgba(0,0,0,0.75); padding: 4px 18px 5px; clip-path: polygon(8% 0, 92% 0, 100% 50%, 92% 100%, 8% 100%, 0 50%); min-width: 200px; }
@@ -93,7 +92,7 @@
   .time { font: 600 11px 'Chakra Petch'; letter-spacing: 2px; color: var(--dim); line-height: 1.1; }
   .collapse { position: absolute; left: 50%; top: calc(50% + 30px); transform: translateX(-50%); font: 700 13px 'Chakra Petch'; letter-spacing: 4px;
     color: #ffb070; display: none; z-index: 3; text-shadow: 0 0 10px rgba(0,0,0,0.9); }
-  .collapse.danger { color: var(--red); animation: blink 0.25s infinite; font-size: 16px; }
+  .collapse.danger { color: var(--red); animation: blink 1.4s ease-in-out infinite; font-size: 16px; }
   #hud.single .collapse, #hud.vertical .collapse { top: 64px; }
   .banner { position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%); text-align: center; opacity: 0; z-index: 4; pointer-events: none; }
   .banner.on { animation: banner 3.2s ease-out forwards; }
@@ -114,7 +113,7 @@
   .bossbar i { width: 54px; height: 8px; background: #9fe0ff; box-shadow: 0 0 10px #9fe0ff; transform: skewX(-20deg); }
   .bossbar i.dead { background: rgba(255,255,255,0.12); box-shadow: none; }
   .bossbar .bphase { font: 600 11px 'Chakra Petch'; letter-spacing: 3px; color: var(--dim); }
-  .bossbar .bphase.hot { color: #9fe0ff; animation: blink 0.5s infinite; }
+  .bossbar .bphase.hot { color: #9fe0ff; animation: blink 1.4s ease-in-out infinite; }
   .bigmsg { position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%); text-align: center; z-index: 5; opacity: 0;
     font: 700 clamp(36px, 6vw, 84px) 'Chakra Petch'; letter-spacing: 0.25em; padding-left: 0.25em; text-shadow: 0 0 30px rgba(0,0,0,0.8); }
   .bigmsg.on { animation: big 1.6s ease-out forwards; }
@@ -122,7 +121,7 @@
   .bigmsg.red { color: var(--red); }
   .bigmsg.count { font-size: clamp(60px, 12vw, 160px); }
   @keyframes big { 0% { opacity: 0; transform: translateY(-50%) scale(1.6); } 10% { opacity: 1; transform: translateY(-50%) scale(1); } 75% { opacity: 1; } 100% { opacity: 0; transform: translateY(-50%) scale(0.96); } }
-  @keyframes blink { 50% { opacity: 0.35; } }
+  @keyframes blink { 50% { opacity: 0.6; } }
 
   /* overlays */
   .overlay { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; flex-direction: column; z-index: 10; text-align: center; }

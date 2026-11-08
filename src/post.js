@@ -30,8 +30,8 @@ const FinalShader = {
       float r = length(c * vec2(uAspect, 1.0));
       // radial speed blur
       vec3 col = vec3(0.0);
-      float blur = uSpeed * smoothstep(0.15, 0.9, r) * 0.035;
-      float ab = (0.0015 + uAberr * 0.008) * r;
+      float blur = uSpeed * smoothstep(0.35, 1.0, r) * 0.012;
+      float ab = uAberr * 0.0025 * r;
       for (int i = 0; i < 6; i++) {
         float k = float(i) / 5.0;
         vec2 o = c * blur * k;
@@ -43,21 +43,18 @@ const FinalShader = {
       col *= uTint;
       // signal-lost static
       if (uStatic > 0.0) {
-        float n = hash(floor(uv * vec2(320.0, 180.0)));
-        float band = step(0.97, fract(uv.y * 3.0 + uTime * 1.7));
-        uv.x += band * 0.03 * uStatic;
-        col = mix(col, vec3(n) * vec3(0.7, 0.75, 0.8), uStatic * 0.55);
-        col *= 1.0 - 0.25 * uStatic * sin(uv.y * 700.0);
-        col = mix(col, vec3(dot(col, vec3(0.3, 0.59, 0.11))), uStatic * 0.7);
+        // calm desaturate + dim instead of strobing TV static
+        col = mix(col, vec3(dot(col, vec3(0.3, 0.59, 0.11))), uStatic * 0.85);
+        col *= 1.0 - 0.35 * uStatic;
       }
       // damage & alarm edge
       float edge = smoothstep(0.35, 0.95, r);
-      col = mix(col, vec3(1.0, 0.05, 0.02), edge * (uDamage * 0.8 + uAlarm * 0.35));
+      col = mix(col, vec3(0.8, 0.05, 0.02), edge * (uDamage * 0.4 + uAlarm * 0.18));
       // vignette
       col *= 1.0 - smoothstep(0.45, 1.15, r) * 0.65;
       // grain
-      col += (hash(uv * 1000.0) - 0.5) * 0.045;
-      col = mix(col, vec3(1.0), uFlash);
+      col += (hash(uv * 1000.0) - 0.5) * 0.01;
+      col = mix(col, vec3(1.0), min(uFlash, 0.6));
       gl_FragColor = vec4(col, 1.0);
     }`,
 };
@@ -67,7 +64,7 @@ export class ViewPost {
     this.composer = new EffectComposer(renderer);
     this.composer.renderToScreen = true;
     this.renderPass = new RenderPass(scene, camera);
-    this.bloom = new UnrealBloomPass(new THREE.Vector2(512, 512), 0.5, 0.25, 0.9);
+    this.bloom = new UnrealBloomPass(new THREE.Vector2(512, 512), 0.35, 0.2, 0.92);
     this.output = new OutputPass();
     this.final = new ShaderPass(FinalShader);
     this.composer.addPass(this.renderPass);
