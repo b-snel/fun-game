@@ -267,7 +267,7 @@ export const FX = {
     const c1 = fire ? [6, 2.6, 0.8] : [1.5, 4, 8];
     const c2 = fire ? [4, 0.9, 0.2] : [0.6, 1.5, 6];
     // flash
-    this.sparks.spawn(p.x, p.y, p.z, bv.x, bv.y, bv.z, 10, 7, 4, 14 * scale, 0.18, { drag: 0 });
+    this.sparks.spawn(p.x, p.y, p.z, bv.x, bv.y, bv.z, 5, 3.5, 2, Math.min(24, 12 * scale), 0.15, { drag: 0 });
     // fireball
     const nFire = (30 * scale) | 0;
     for (let i = 0; i < nFire; i++) {
@@ -299,7 +299,7 @@ export const FX = {
       d.life = rand(1.2, 2.4);
       d.s = rand(0.5, 1.6) * Math.sqrt(scale);
     }
-    this.light(p, fire ? 0xff7a30 : 0x60a0ff, 900 * scale, 0.5 + 0.2 * scale);
+    this.light(p, fire ? 0xff7a30 : 0x60a0ff, Math.min(1600, 500 * scale), 0.4 + 0.15 * scale);
     this.shell(p, fire ? 0xff9050 : 0x80c0ff, 14 * scale, 0.45);
   },
 

@@ -256,8 +256,8 @@ export class Warden {
   _destroyCore(c, game) {
     c.alive = false;
     c.pivot.visible = false;
-    FX.explosion(c.pos, 3, this.vel, 'plasma');
-    FX.explosion(c.pos, 2, this.vel);
+    FX.explosion(c.pos, 2.2, this.vel, 'plasma');
+    FX.explosion(c.pos, 1.4, this.vel);
     game.audio.boom();
     this.stagger = 2.5;
     this._setPhase('stagger');
@@ -306,7 +306,7 @@ export class Warden {
         _v.copy(this.pos).add(_v2.set(rand(-25, 25), rand(0, 12), rand(-25, 25)));
         FX.explosion(_v, 4, this.vel.clone().multiplyScalar(0.3));
       }
-      FX.light(this.pos, 0xffa050, 20000, 2.5);
+      FX.light(this.pos, 0xffa050, 5000, 2.0);
       game.audio.boom();
       game.onBossDead(this.pos);
     }

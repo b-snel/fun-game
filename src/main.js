@@ -402,8 +402,8 @@ class Game {
     this.score += 25000;
     this.slow(0.2, 1.4);
     this.globalShake = 1.6;
-    this.flash = 0.8;
-    this.world.flash = 2;
+    this.flash = 0.45;
+    this.world.flash = 1.2;
     for (const p of this.players) this.input.rumble(p.dev, 1, 1, 1500);
     this.hud.bigMsg('WARDEN DOWN', 'sync', 2.5);
     setTimeout(() => {

@@ -34,7 +34,7 @@ export class TetherFX {
             float rim = abs(dot(vN, vV));
             float core = uW < 0.5 ? pow(rim, 0.6) : pow(rim, 2.5) * 0.45;
             float flick = 1.0 - uStrain * step(0.6, fract(sin(uTime*91.0)*43758.5));
-            vec3 col = (uW < 0.5 ? mix(c, vec3(1.0), 0.45) * 1.5 : c * 1.4) * core * (0.6 + 0.4*pulse + 0.3*pulse2) * flick;
+            vec3 col = (uW < 0.5 ? mix(c, vec3(1.0), 0.45) * 1.5 : c * 1.1) * core * (0.6 + 0.4*pulse + 0.3*pulse2) * flick;
             gl_FragColor = vec4(col * uAlpha * smoothstep(2.0, 9.0, vDepth), 1.0);
           }`,
       });
@@ -97,7 +97,7 @@ export class TetherFX {
     this.core.scale.set(0.09 * pulse, visLen, 0.09 * pulse);
     this.glow.position.copy(_mid);
     this.glow.quaternion.copy(_q);
-    const gw = 0.55 + state.strain * 0.6 + (state.sync ? 1.2 : 0);
+    const gw = 0.38 + state.strain * 0.5 + (state.sync ? 1.2 : 0);
     this.glow.scale.set(gw, visLen, gw);
     this.uniforms.uTime.value = time;
     this.uniforms.uStrain.value = state.strain * state.strain;

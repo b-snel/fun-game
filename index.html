@@ -94,7 +94,7 @@
   .collapse { position: absolute; left: 50%; top: calc(50% + 30px); transform: translateX(-50%); font: 700 13px 'Chakra Petch'; letter-spacing: 4px;
     color: #ffb070; display: none; z-index: 3; text-shadow: 0 0 10px rgba(0,0,0,0.9); }
   .collapse.danger { color: var(--red); animation: blink 0.25s infinite; font-size: 16px; }
-  #hud.single .collapse, #hud.vertical .collapse { top: 72px; }
+  #hud.single .collapse, #hud.vertical .collapse { top: 64px; }
   .banner { position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%); text-align: center; opacity: 0; z-index: 4; pointer-events: none; }
   .banner.on { animation: banner 3.2s ease-out forwards; }
   .banner .sub { font: 600 14px 'Chakra Petch'; letter-spacing: 10px; color: var(--dim); }
@@ -107,6 +107,7 @@
   .hint.on { opacity: 1; }
   .hint b { color: #fff; } .hint k, .glyph { display: inline-block; min-width: 24px; padding: 0 6px; border: 1px solid rgba(255,255,255,0.5); border-radius: 4px; font-size: 12px; margin: 0 2px; }
   .bossbar { position: absolute; left: 50%; top: 14px; transform: translateX(-50%); text-align: center; display: none; z-index: 3; }
+  #hud.single .bossbar, #hud.vertical .bossbar { top: 64px; }
   #hud:not(.single):not(.vertical) .bossbar { top: calc(50% + 34px); }
   .bossbar .bname { font: 700 12px 'Chakra Petch'; letter-spacing: 6px; color: var(--red); }
   .bossbar .segs { display: flex; gap: 6px; justify-content: center; margin: 4px 0; }
