@@ -64,7 +64,7 @@ export class ViewPost {
     this.composer = new EffectComposer(renderer);
     this.composer.renderToScreen = true;
     this.renderPass = new RenderPass(scene, camera);
-    this.bloom = new UnrealBloomPass(new THREE.Vector2(512, 512), 0.35, 0.2, 0.92);
+    this.bloom = new UnrealBloomPass(new THREE.Vector2(512, 512), 0.25, 0.15, 0.95);
     this.output = new OutputPass();
     this.final = new ShaderPass(FinalShader);
     this.composer.addPass(this.renderPass);

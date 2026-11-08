@@ -19,8 +19,8 @@ export class Warden {
   _build() {
     const hullMat = new THREE.MeshStandardMaterial({ color: 0x2c3036, metalness: 0.85, roughness: 0.38, flatShading: true });
     const darkMat = new THREE.MeshStandardMaterial({ color: 0x14161a, metalness: 0.7, roughness: 0.5, flatShading: true });
-    const redMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(9, 0.8, 0.3) });
-    const engMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(6, 3, 1.2) });
+    const redMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(2.5, 0.25, 0.1) });
+    const engMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(2, 1, 0.4) });
     const body = new THREE.Group();
     this.body = body;
     this.group.add(body);
@@ -68,7 +68,7 @@ export class Warden {
       const cable = new THREE.Mesh(cableGeo, darkMat);
       cable.scale.y = HANG;
       pivot.add(cable);
-      const core = new THREE.Mesh(coreGeo, new THREE.MeshBasicMaterial({ color: new THREE.Color(1.5, 4, 9) }));
+      const core = new THREE.Mesh(coreGeo, new THREE.MeshBasicMaterial({ color: new THREE.Color(0.5, 1.4, 3) }));
       core.position.y = -HANG;
       pivot.add(core);
       const shield = new THREE.Mesh(
@@ -184,7 +184,7 @@ export class Warden {
       -Math.cos(this.time * 0.37 * rage) * 0.18 + (this.stagger > 0 ? Math.sin(this.time * 23) * 0.1 : 0)
     );
     this.group.updateMatrixWorld(true);
-    this.light.intensity = 700 + Math.sin(this.time * 1.5) * 150;
+    this.light.intensity = 250 + Math.sin(this.time * 1.5) * 50;
 
     // cores swing & tether cutting
     const T = game.tetherState;
@@ -292,7 +292,7 @@ export class Warden {
     this.pos.copy(this.group.position);
     if (dt > 0) this.vel.subVectors(this.pos, this.prev).divideScalar(dt);
     this.group.updateMatrixWorld(true);
-    if (Math.random() < dt * 9) {
+    if (Math.random() < dt * 3) {
       _v.set(rand(-34, 34), rand(-4, 6), rand(-25, 25)).applyMatrix4(this.body.matrixWorld);
       FX.explosion(_v, rand(1, 2.2), this.vel);
       game.audio.explode(1.5);

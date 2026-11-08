@@ -432,7 +432,7 @@ export class Track {
 
     // --- wall light strips ---
     const stripGeo = new THREE.BoxGeometry(0.35, 0.35, 9);
-    const stripMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(2.4, 2.4, 2.4) });
+    const stripMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(1.1, 1.1, 1.1) });
     const strips = [];
     for (let s = 20; s < this.length - 20; s += 26) {
       const sec = sectionAt(s);
@@ -452,8 +452,8 @@ export class Track {
     // --- floor edge lights & centre dashes ---
     const dotGeo = new THREE.BoxGeometry(0.5, 0.18, 1.6);
     const dashGeo = new THREE.BoxGeometry(0.35, 0.05, 5);
-    const dotMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(2.6, 2.6, 2.6) });
-    const dashMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(0.35, 0.36, 0.38) });
+    const dotMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(1.0, 1.0, 1.0) });
+    const dashMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(0.18, 0.19, 0.2) });
     const dots = [], dashes = [];
     for (let s = 10; s < this.length - 10; s += 12) {
       const sec = sectionAt(s);
@@ -484,7 +484,7 @@ export class Track {
       const c = this.ceilA[Math.round(this._idx(s))];
       if (c > 0) panels.push(s);
     }
-    const panelMesh = new THREE.InstancedMesh(new THREE.BoxGeometry(6, 0.2, 2.2), new THREE.MeshBasicMaterial({ color: new THREE.Color(2.2, 2.0, 1.8) }), panels.length * 2);
+    const panelMesh = new THREE.InstancedMesh(new THREE.BoxGeometry(6, 0.2, 2.2), new THREE.MeshBasicMaterial({ color: new THREE.Color(1.0, 0.95, 0.85) }), panels.length * 2);
     panels.forEach((s, i) => {
       const c = this.ceil(s);
       const hw = this.hw(s);
@@ -548,7 +548,7 @@ export class Track {
       const hw = this.hw(o.s);
       for (let x = -hw + 2; x <= hw - 2; x += 4) warn.push([o.s - o.r * 1.2 - 0.05, x, o.y]);
     }
-    const warnMesh = new THREE.InstancedMesh(new THREE.BoxGeometry(0.9, 0.5, 0.15), new THREE.MeshBasicMaterial({ color: new THREE.Color(6, 1.2, 0.4) }), warn.length);
+    const warnMesh = new THREE.InstancedMesh(new THREE.BoxGeometry(0.9, 0.5, 0.15), new THREE.MeshBasicMaterial({ color: new THREE.Color(2.0, 0.4, 0.15) }), warn.length);
     warn.forEach((w, i) => { this.frameMatrix(w[0], w[1], w[2], m); warnMesh.setMatrixAt(i, m); });
     warnMesh.frustumCulled = false;
     scene.add(warnMesh);
@@ -565,10 +565,10 @@ export class Track {
       }
     }
     const towerMat = new THREE.MeshStandardMaterial({
-      color: 0x101216, roughness: 0.6, metalness: 0.6, emissive: 0xffffff, emissiveMap: tex.windows, emissiveIntensity: 1.6, map: tex.windows,
+      color: 0x101216, roughness: 0.6, metalness: 0.6, emissive: 0xffffff, emissiveMap: tex.windows, emissiveIntensity: 0.7, map: tex.windows,
     });
     const towerMesh = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), towerMat, towers.length);
-    const beacons = new THREE.InstancedMesh(new THREE.SphereGeometry(1.2, 6, 4), new THREE.MeshBasicMaterial({ color: new THREE.Color(8, 0.5, 0.3) }), towers.length);
+    const beacons = new THREE.InstancedMesh(new THREE.SphereGeometry(1.2, 6, 4), new THREE.MeshBasicMaterial({ color: new THREE.Color(2.5, 0.2, 0.1) }), towers.length);
     towers.forEach((t, i) => {
       this.frameMatrix(t.s, t.x, t.h / 2 - 40, m, t.w, t.h, t.d);
       towerMesh.setMatrixAt(i, m);

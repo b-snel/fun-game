@@ -34,7 +34,7 @@ export class TetherFX {
             float rim = abs(dot(vN, vV));
             float core = uW < 0.5 ? pow(rim, 0.6) : pow(rim, 2.5) * 0.45;
             float flick = 1.0 - uStrain * 0.25 * (0.5 + 0.5*sin(uTime*6.0));
-            vec3 col = (uW < 0.5 ? mix(c, vec3(1.0), 0.45) * 1.5 : c * 1.1) * core * (0.6 + 0.4*pulse + 0.3*pulse2) * flick;
+            vec3 col = (uW < 0.5 ? mix(c, vec3(1.0), 0.35) * 0.85 : c * 0.45) * core * (0.6 + 0.4*pulse + 0.3*pulse2) * flick;
             gl_FragColor = vec4(col * uAlpha * smoothstep(2.0, 9.0, vDepth), 1.0);
           }`,
       });
@@ -56,7 +56,7 @@ export class TetherFX {
       side: THREE.DoubleSide,
       vertexShader: `attribute float aT; varying float vT; varying float vDepth; void main(){ vT = aT; vec4 mv = modelViewMatrix*vec4(position,1.0); vDepth = -mv.z; gl_Position = projectionMatrix*mv;} `,
       fragmentShader: `uniform vec3 uA; uniform vec3 uB; uniform float uStrain; uniform float uAlpha; varying float vT; varying float vDepth;
-        void main(){ vec3 c = mix(uA, uB, vT); c = mix(c, vec3(1.0,0.2,0.1), uStrain); gl_FragColor = vec4((c*1.2+0.4) * 0.9 * uAlpha * smoothstep(2.0, 9.0, vDepth), 1.0);} `,
+        void main(){ vec3 c = mix(uA, uB, vT); c = mix(c, vec3(1.0,0.2,0.1), uStrain); gl_FragColor = vec4((c*1.0+0.25) * 0.55 * uAlpha * smoothstep(2.0, 9.0, vDepth), 1.0);} `,
     });
     for (let a = 0; a < ARCS; a++) {
       const g = new THREE.BufferGeometry();
@@ -97,7 +97,7 @@ export class TetherFX {
     this.core.scale.set(0.09 * pulse, visLen, 0.09 * pulse);
     this.glow.position.copy(_mid);
     this.glow.quaternion.copy(_q);
-    const gw = 0.38 + state.strain * 0.5 + (state.sync ? 1.2 : 0);
+    const gw = 0.3 + state.strain * 0.35 + (state.sync ? 1.2 : 0);
     this.glow.scale.set(gw, visLen, gw);
     this.uniforms.uTime.value = time;
     this.uniforms.uStrain.value = state.strain * state.strain;

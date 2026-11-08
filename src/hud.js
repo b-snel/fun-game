@@ -48,10 +48,11 @@ export class HUD {
       speed: el('div', 'speed', v, '<b>0</b><small>KM/H</small>'),
       tether: el('div', 'tether', v, ''),
       pops: el('div', 'pops', v),
-      downed: el('div', 'downed', v, '<div class="t1">HULL BREACHED</div><div class="t2">PARTNER: FLY CLOSE TO REVIVE</div><div class="bar rv"><div></div></div>'),
+      downed: el('div', 'downed', v, '<div class="t1">YOU\'RE DOWN</div><div class="t2">HANG ON — YOUR PARTNER REVIVES YOU BY FLYING NEXT TO YOUR WRECK</div><div class="bar rv"><div></div></div>'),
       warn: el('div', 'vwarn', v, ''),
       cut: el('div', 'cut', v, '<div class="t">CUTTING CORE</div><div class="bar"><div></div></div>'),
       sync: el('div', 'syncready', v, 'SYNC READY'),
+      rescue: el('div', 'rescue', v, '<div class="t"></div><div class="bar"><div></div></div>'),
     };
     o.hullFill = o.bars.querySelector('.hull > div');
     o.energyFill = o.bars.querySelector('.energy > div');
@@ -60,6 +61,8 @@ export class HUD {
     o.arrowInner = o.arrow.querySelector('div');
     o.rvFill = o.downed.querySelector('.rv > div');
     o.cutFill = o.cut.querySelector('.bar > div');
+    o.rescueT = o.rescue.querySelector('.t');
+    o.rescueFill = o.rescue.querySelector('.bar > div');
     o.lastHull = -1;
     o.cutT = 0;
     return o;
@@ -136,6 +139,7 @@ export class HUD {
     this.warnT -= dt;
     if (this.warnT <= 0) for (const v of this.views) v.warn.classList.remove('on');
 
+    this.center.style.display = game.training ? 'none' : '';
     this.scoreEl.textContent = game.score.toLocaleString();
     this.comboEl.textContent = game.combo > 1 ? `×${game.combo}` : '';
     this.comboEl.style.opacity = game.combo > 1 ? clamp(game.comboT / 1.0, 0.3, 1) : 0;
@@ -227,6 +231,17 @@ export class HUD {
     } else { ts = 'TETHER SNAPPED — CLOSE IN'; cls = 'off'; }
     if (v.tether.textContent !== ts) v.tether.textContent = ts;
     v.tether.className = 'tether ' + cls;
+
+    // guide the partner to a downed ship
+    const rescuing = other.downed && !p.downed;
+    v.rescue.classList.toggle('on', rescuing);
+    if (rescuing) {
+      const close = dist < 18;
+      const txt = close ? `REVIVING P${2 - i} — STAY CLOSE` : `P${2 - i} IS DOWN — FLY TO THE GREEN BEACON (${dist | 0}M)`;
+      if (v.rescueT.textContent !== txt) v.rescueT.textContent = txt;
+      v.rescue.classList.toggle('close', close);
+      v.rescueFill.style.width = (other.reviveT / game.REVIVE_TIME) * 100 + '%';
+    }
 
     // downed overlay
     v.downed.classList.toggle('on', p.downed);

@@ -45,8 +45,8 @@ export function buildShipMesh(color) {
   const metal = new THREE.MeshStandardMaterial({ color: 0xa8b0ba, metalness: 0.6, roughness: 0.35, flatShading: true, envMapIntensity: 4 });
   const dark = new THREE.MeshStandardMaterial({ color: 0x3a3f46, metalness: 0.75, roughness: 0.4, flatShading: true, side: THREE.DoubleSide, envMapIntensity: 3 });
   const glass = new THREE.MeshStandardMaterial({ color: 0x05080c, metalness: 1, roughness: 0.08, emissive: color, emissiveIntensity: 0.08, flatShading: true });
-  const glowMat = new THREE.MeshBasicMaterial({ color: color.clone().multiplyScalar(3) });
-  const accentMat = new THREE.MeshBasicMaterial({ color: color.clone().multiplyScalar(2.5) });
+  const glowMat = new THREE.MeshBasicMaterial({ color: color.clone().multiplyScalar(1.4) });
+  const accentMat = new THREE.MeshBasicMaterial({ color: color.clone().multiplyScalar(1.2) });
 
   body.add(new THREE.Mesh(hullGeometry(), metal));
   const canopy = new THREE.Mesh(new THREE.OctahedronGeometry(1, 0), glass);
@@ -130,11 +130,21 @@ export class Player {
     this.color = PLAYER_COLORS[id];
     this.mesh = buildShipMesh(this.color);
     scene.add(this.mesh);
-    this.light = new THREE.PointLight(this.color, 60, 28, 1.6);
+    this.light = new THREE.PointLight(this.color, 12, 22, 1.6);
     scene.add(this.light);
     this.trails = [new Trail(scene, this.color.clone().multiplyScalar(1.1), 0.22, 22), new Trail(scene, this.color.clone().multiplyScalar(1.1), 0.22, 22),
       new Trail(scene, new THREE.Color(0.6, 0.65, 0.7), 0.06, 26), new Trail(scene, new THREE.Color(0.6, 0.65, 0.7), 0.06, 26)];
     this.frame = makeFrame();
+    // green rescue beacon shown while downed
+    const bGeo = new THREE.CylinderGeometry(0.5, 0.5, 60, 8, 1, true);
+    bGeo.translate(0, 30, 0);
+    this.beacon = new THREE.Mesh(bGeo, new THREE.MeshBasicMaterial({ color: new THREE.Color(0.15, 0.9, 0.3), transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false }));
+    this.beacon.visible = false;
+    this.beacon.frustumCulled = false;
+    scene.add(this.beacon);
+    this.ring = new THREE.Mesh(new THREE.TorusGeometry(4.5, 0.12, 6, 40), this.beacon.material);
+    this.ring.visible = false;
+    scene.add(this.ring);
     this.pos = new THREE.Vector3();
     this.prevPos = new THREE.Vector3();
     this.vel = new THREE.Vector3();
@@ -324,6 +334,15 @@ export class Player {
     body.rotation.set(this.pitch, 0, this.bank + this.rollAngle, 'YXZ');
     if (this.downed) body.rotation.z += performance.now() * 0.002;
     this.light.position.copy(this.pos).addScaledVector(fr.up, -1);
+    this.beacon.visible = this.ring.visible = this.downed;
+    if (this.downed) {
+      this.beacon.position.copy(this.pos);
+      this.beacon.quaternion.copy(this.mesh.quaternion);
+      this.ring.position.copy(this.pos);
+      this.ring.quaternion.copy(this.mesh.quaternion);
+      this.ring.rotateX(Math.PI / 2);
+      this.ring.scale.setScalar(1 + 0.15 * Math.sin(performance.now() * 0.004));
+    }
   }
 
   _updateCamera(dt, game) {
@@ -363,7 +382,7 @@ export class Player {
   _updateFx(dt, game) {
     const ud = this.mesh.userData;
     const boost = this.boosting ? 1 : 0;
-    const pow = 0.6 + boost * 1.2 + (this.syncT > 0 ? 1.5 : 0);
+    const pow = 0.35 + boost * 0.5 + (this.syncT > 0 ? 0.6 : 0);
     ud.flameMat.uniforms.uPow.value = pow;
     ud.flameMat.uniforms.uTime.value = game.time;
     for (const f of ud.flames) f.scale.set(1 + boost * 0.3, 1 + boost * 0.3, 1.8 + boost * 3.5 + (this.syncT > 0 ? 4 : 0));
@@ -372,14 +391,14 @@ export class Player {
     body.updateWorldMatrix(true, false);
     for (let i = 0; i < 2; i++) {
       _p.set(i ? 0.42 : -0.42, 0.02, 2.7).applyMatrix4(body.matrixWorld);
-      this.trails[i].push(_p, this.up, 0.5 + boost * 1.2 + (this.syncT > 0 ? 1.5 : 0));
+      this.trails[i].push(_p, this.up, 0.3 + boost * 0.4 + (this.syncT > 0 ? 0.5 : 0));
     }
     for (let i = 0; i < 2; i++) {
       _p.set(i ? 3.0 : -3.0, -0.13, 1.8).applyMatrix4(body.matrixWorld);
       const lat = Math.min(1, Math.abs(this.vx) / 30 + Math.abs(this.vy) / 40 + boost * 0.5);
       this.trails[2 + i].push(_p, this.up, lat * 0.9);
     }
-    this.light.intensity = 40 + pow * 30;
+    this.light.intensity = 10 + pow * 6;
     if (this.hull < 35 && Math.random() < (35 - this.hull) / 35) {
       FX.smoke.spawn(this.pos.x, this.pos.y, this.pos.z, this.vel.x * 0.6, this.vel.y * 0.6 + 2, this.vel.z * 0.6, 0.08, 0.08, 0.08, 1.4, 0.8, { grow: 2, alpha: 0.6 });
       if (Math.random() < 0.3) FX.spark(this.pos, _v.copy(this.vel).multiplyScalar(0.8), _c.setRGB(5, 2, 0.5), 0.5, 0.3);
@@ -389,10 +408,10 @@ export class Player {
   _updateDowned(dt, game) {
     const partner = game.players[1 - this.id];
     // drift alongside, a little behind and below the partner
-    const ts = partner.downed ? this.s + this.vs * dt : partner.s - 14;
+    const ts = partner.downed ? this.s + this.vs * dt : partner.s - 6;
     this.vs = partner.downed ? Math.max(0, this.vs - 30 * dt) : partner.vs;
-    this.s = partner.downed ? ts : damp(this.s, ts, 1.2, dt);
-    this.y = damp(this.y, 3, 1, dt);
+    this.s = partner.downed ? ts : Math.max(damp(this.s, ts, 3, dt), partner.s - 22);
+    this.y = damp(this.y, 5, 1, dt);
     this.vx = 0; this.vy = 0;
     this.boosting = false;
     this.bank += dt * 1.5;

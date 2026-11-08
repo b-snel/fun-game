@@ -152,12 +152,42 @@
   #pause { background: rgba(0,0,0,0.7); }
   #pause h2 { font: 700 60px 'Chakra Petch'; letter-spacing: 0.3em; margin: 0; }
   #pause .opts { font: 600 16px 'Chakra Petch'; letter-spacing: 3px; line-height: 2.2; margin-top: 20px; }
+  /* training panel */
+  #tut { position: fixed; left: 50%; top: 12px; transform: translateX(-50%); z-index: 6; display: none; width: min(760px, 92vw);
+    background: rgba(6, 9, 12, 0.88); border-left: 3px solid var(--p1); border-right: 3px solid var(--p2); padding: 12px 20px 12px; text-align: center; pointer-events: none; }
+  #tut.on { display: block; }
+  #tut .tstep { font: 700 12px 'Chakra Petch'; letter-spacing: 4px; color: var(--dim); margin-bottom: 6px; }
+  #tut .ttext { font: 500 17px 'Rajdhani'; letter-spacing: 0.5px; line-height: 1.35; color: var(--fg); }
+  #tut .ttext b { color: #fff; } #tut k { display: inline-block; padding: 0 6px; border: 1px solid rgba(255,255,255,0.5); border-radius: 4px; font: 600 12px 'Chakra Petch'; margin: 0 1px; }
+  #tut .tprog { margin-top: 8px; display: flex; gap: 18px; justify-content: center; font: 700 12px 'Chakra Petch'; letter-spacing: 2px; }
+  #tut .tp { display: inline-flex; align-items: center; gap: 8px; } #tut .tp.p1 { color: var(--p1); } #tut .tp.p2 { color: var(--p2); }
+  #tut .tp i { display: inline-block; width: 90px; height: 6px; background: linear-gradient(90deg, currentColor calc(var(--f) * 100%), rgba(255,255,255,0.12) 0); }
+  #tut .tdone { margin-top: 6px; font: 700 16px 'Chakra Petch'; letter-spacing: 4px; color: #8dff9a; }
+  /* mode menu */
+  .modes { display: none; margin-top: 28px; width: 628px; max-width: 92vw; }
+  #title.menu .modes { display: block; }
+  #title.menu .help { display: none; }
+  .mode { display: flex; justify-content: space-between; align-items: baseline; padding: 12px 18px; margin-bottom: 8px; background: rgba(0,0,0,0.55); border-left: 3px solid transparent; opacity: 0.55; }
+  .mode b { font: 700 22px 'Chakra Petch'; letter-spacing: 6px; } .mode span { font: 600 11px 'Chakra Petch'; letter-spacing: 2px; color: var(--dim); }
+  .mode.sel { opacity: 1; border-left-color: #fff; background: rgba(255,255,255,0.08); }
+  .mhint { margin-top: 10px; font: 600 12px 'Chakra Petch'; letter-spacing: 3px; color: var(--dim); }
+  /* revive guidance */
+  .rescue { position: absolute; left: 50%; top: 64%; transform: translateX(-50%); display: none; text-align: center; }
+  .rescue.on { display: block; }
+  .rescue .t { font: 700 15px 'Chakra Petch'; letter-spacing: 3px; color: #8dff9a; white-space: nowrap; text-shadow: 0 0 8px rgba(0,0,0,0.9); }
+  .rescue .bar { width: 220px; height: 8px; margin: 6px auto 0; } .rescue .bar > div { background: #8dff9a; width: 0; transition: none; }
+  .rescue:not(.close) .bar { opacity: 0.35; }
+  /* pause rules */
+  #pause .rules { margin-top: 26px; max-width: 760px; text-align: left; font: 500 15px 'Rajdhani'; letter-spacing: 0.5px; line-height: 1.5; color: var(--dim); }
+  #pause .rules div { margin: 6px 0; } #pause .rules b { color: var(--fg); letter-spacing: 2px; font-family: 'Chakra Petch'; font-size: 13px; }
+  #pause:not(.training) .skiptr { display: none; }
   #loading { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; font: 600 14px 'Chakra Petch'; letter-spacing: 6px; color: var(--dim); background: #000; z-index: 20; }
 </style>
 </head>
 <body>
   <div id="loading">BUILDING THE TRENCH…</div>
   <div id="hud"></div>
+  <div id="tut"></div>
   <div id="divider"></div>
   <div id="title" class="overlay">
     <h1>TETHER</h1>
@@ -165,6 +195,11 @@
     <div class="slots">
       <div class="slot" id="slot0" style="--c: var(--p1)"><div class="who">P1</div><div class="dev"></div><div class="st">PRESS <span class="glyph">A</span> / SPACE TO JOIN</div></div>
       <div class="slot" id="slot1" style="--c: var(--p2)"><div class="who">P2</div><div class="dev"></div><div class="st">PRESS <span class="glyph">A</span> / ENTER TO JOIN</div></div>
+    </div>
+    <div class="modes" id="modes">
+      <div class="mode"><b>TRAINING</b><span>LEARN HOW EVERYTHING WORKS · 3 MIN · RECOMMENDED FIRST</span></div>
+      <div class="mode"><b>MISSION</b><span>THE FULL RUN: TRENCH → UNDERCITY → COLLAPSE → BOSS</span></div>
+      <div class="mhint">UP / DOWN TO CHOOSE · <span class="glyph">A</span> / SPACE / ENTER TO START</div>
     </div>
     <div class="help">
       <b>LEFT STICK</b> FLY &nbsp;·&nbsp; <b>RT</b> FIRE &nbsp;·&nbsp; <b>A</b> BOOST &nbsp;·&nbsp; <b>B</b> BARREL ROLL &nbsp;·&nbsp; <b>LT</b> AIR-BRAKE<br />
@@ -176,7 +211,15 @@
   </div>
   <div id="results" class="overlay"></div>
   <div id="fail" class="overlay"><h2>SIGNAL LOST</h2><div class="cont">PRESS <span class="glyph">A</span> / SPACE TO RETRY FROM CHECKPOINT</div></div>
-  <div id="pause" class="overlay"><h2>PAUSED</h2><div class="opts"><span class="glyph">A</span> RESUME &nbsp; <span class="glyph">X</span> / R RESTART CHECKPOINT &nbsp; <span class="glyph">B</span> / Q QUIT TO TITLE</div></div>
+  <div id="pause" class="overlay"><h2>PAUSED</h2>
+    <div class="opts"><span class="glyph">A</span> RESUME &nbsp; <span class="glyph">X</span> / R RESTART CHECKPOINT &nbsp; <span class="glyph">B</span> / Q QUIT TO TITLE<span class="skiptr"> &nbsp; <span class="glyph">Y</span> / T SKIP TRAINING</span></div>
+    <div class="rules">
+      <div><b>STEER</b> left stick · <b>FIRE</b> RT (auto-aims) · <b>BOOST</b> A · <b>ROLL</b> B (invulnerable while rolling) · <b>BRAKE</b> LT</div>
+      <div><b>TETHER</b> — the beam between your ships destroys enemies it touches and blocks their shots. Snaps past ~80&nbsp;m; fly back together to relink.</div>
+      <div><b>SYNC BURST</b> — both press A at the same moment (solo: double-tap A). Speed, shockwave, invulnerability.</div>
+      <div><b>REVIVE</b> — a destroyed ship goes down and shows a green beacon. Its partner flies right next to it until the bar fills. Both down = restart the sector.</div>
+      <div><b>COLLAPSE</b> — the trench falls apart behind you. Keep moving.</div>
+    </div></div>
   <script type="module" src="./src/main.js"></script>
 </body>
 </html>

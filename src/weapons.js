@@ -8,7 +8,7 @@ const P_MAX = 400, E_MAX = 300, M_MAX = 40;
 export class Weapons {
   constructor(scene) {
     const boltGeo = new THREE.BoxGeometry(0.14, 0.14, 5);
-    this.pMesh = new THREE.InstancedMesh(boltGeo, new THREE.MeshBasicMaterial({ color: new THREE.Color(5, 5, 5), blending: THREE.AdditiveBlending, transparent: true, depthWrite: false }), P_MAX);
+    this.pMesh = new THREE.InstancedMesh(boltGeo, new THREE.MeshBasicMaterial({ color: new THREE.Color(1.6, 1.6, 1.6), blending: THREE.AdditiveBlending, transparent: true, depthWrite: false }), P_MAX);
     this.pMesh.frustumCulled = false;
     this.pBolts = [];
     for (let i = 0; i < P_MAX; i++) {
@@ -19,7 +19,7 @@ export class Weapons {
     this.pCursor = 0;
     const eGeo = new THREE.SphereGeometry(0.42, 8, 6);
     eGeo.scale(1, 1, 4.5);
-    this.eMesh = new THREE.InstancedMesh(eGeo, new THREE.MeshBasicMaterial({ color: new THREE.Color(9, 1.6, 0.6), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }), E_MAX);
+    this.eMesh = new THREE.InstancedMesh(eGeo, new THREE.MeshBasicMaterial({ color: new THREE.Color(3, 0.5, 0.2), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }), E_MAX);
     this.eMesh.frustumCulled = false;
     this.eBolts = [];
     for (let i = 0; i < E_MAX; i++) {
@@ -71,7 +71,7 @@ export class Weapons {
     b.owner = pl.id;
     this.pMesh.setColorAt(this.pCursor === 0 ? P_MAX - 1 : this.pCursor - 1, _col.copy(PLAYER_COLORS[pl.id]).multiplyScalar(1.3).addScalar(0.25));
     this.pMesh.instanceColor.needsUpdate = true;
-    FX.spark(b.p, pl.vel, _col.copy(PLAYER_COLORS[pl.id]).multiplyScalar(4), 1.4, 0.06, { drag: 0 });
+    FX.spark(b.p, pl.vel, _col.copy(PLAYER_COLORS[pl.id]).multiplyScalar(1.2), 0.8, 0.05, { drag: 0 });
     game.audio.shoot(pl.id);
     game.input.rumble(pl.dev, 0.0, 0.15, 40);
   }
@@ -190,7 +190,7 @@ export class Weapons {
       m.p.addScaledVector(m.v, dt);
       if (m.life <= 0) { this._killMissile(m, game, false); continue; }
       FX.smoke.spawn(m.p.x, m.p.y, m.p.z, 0, 1, 0, 0.15, 0.14, 0.13, 1.2, 0.9, { grow: 2.5, alpha: 0.5 });
-      FX.spark(m.p, _dir.copy(m.v).multiplyScalar(0.2), _col.setRGB(9, 3, 0.8), 1.6, 0.08, { drag: 0 });
+      FX.spark(m.p, _dir.copy(m.v).multiplyScalar(0.2), _col.setRGB(2.5, 0.8, 0.2), 1.2, 0.08, { drag: 0 });
       if (T.on && distPointSegment(m.p, game.players[0].pos, game.players[1].pos) < 1.5) {
         this._killMissile(m, game, true);
       }

@@ -11,12 +11,13 @@ import { HUD } from './hud.js';
 import { Audio } from './audio.js';
 import { Input } from './input.js';
 import { ViewPost } from './post.js';
+import { Tutorial } from './tutorial.js';
 import { clamp, damp, rand, pick, randSign } from './util.js';
 
 const TETHER_MAX = 80;
 const TETHER_STRAIN_START = 48;
 const TETHER_RELINK = 42;
-const REVIVE_RADIUS = 16;
+const REVIVE_RADIUS = 18;
 
 class Game {
   constructor() {
@@ -25,7 +26,7 @@ class Game {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.0;
+    renderer.toneMappingExposure = 0.9;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.autoClear = true;
     document.body.prepend(renderer.domElement);
@@ -41,6 +42,8 @@ class Game {
     this.enemies = new Enemies(this.scene, this.track);
     this.boss = new Warden(this.scene, this.track);
     this.hud = new HUD();
+    this.tutorial = new Tutorial(this);
+    this.training = false;
     this.audio = new Audio();
     this.input = new Input();
     this._buildGates();
@@ -112,6 +115,7 @@ class Game {
     this.rects = rects;
     rects.forEach((r, i) => r && this.posts[i].setSize(r.w, r.h));
     document.body.classList.toggle('vsplit', !single && this.split === 'v');
+    document.body.classList.toggle('single', single);
     this.hud.setLayout(rects, single);
   }
 
@@ -163,6 +167,10 @@ class Game {
   // ---------------- state transitions ----------------
   enterTitle() {
     this.state = 'title';
+    this.training = false;
+    this.menuOpen = false;
+    this.tutorial.stop();
+    document.getElementById('title').classList.remove('menu');
     this.paused = false;
     this.slots = [null, null];
     this.joinT = -1;
@@ -193,15 +201,30 @@ class Game {
     }
   }
 
-  startRun() {
-    document.getElementById('title').classList.remove('on');
+  startRun(training = false) {
+    this.training = training;
+    this.menuOpen = false;
+    document.getElementById('title').classList.remove('on', 'menu');
     this.resetStats();
     this.difficulty = this.solo ? 0.85 : 1;
     this.players.forEach((p, i) => { p.dev = this.slots[i]; });
     this.state = 'countdown';
     this.layout();
     this.hud.show(true);
-    this.startFromCheckpoint('hangar');
+    if (training) {
+      this.startFromCheckpoint('trench');
+      this.countT = 2.6;
+      this.tutorial.start();
+    } else {
+      this.tutorial.stop();
+      this.startFromCheckpoint('hangar');
+    }
+  }
+
+  finishTraining() {
+    this.tutorial.stop();
+    try { localStorage.setItem('tether.trained', '1'); } catch (e) { /* ignore */ }
+    this.startRun(false);
   }
 
   startFromCheckpoint(id) {
@@ -222,11 +245,11 @@ class Game {
     this.extraction = false;
     this.finishS = Infinity;
     this.syncCd = 0;
-    this.speedScale = 1;
+    this.speedScale = this.training ? 0.8 : 1;
     this.flash = 0;
     this.timeScale = 1;
     this.slowT = 0;
-    this.events = this._buildEvents();
+    this.events = this.training ? [] : this._buildEvents();
     this.eventIdx = this.events.findIndex((e) => e.s >= s0);
     if (this.eventIdx < 0) this.eventIdx = this.events.length;
     this.state = 'countdown';
@@ -339,6 +362,7 @@ class Game {
 
   onPlayerDowned(p) {
     if (p.downed) return;
+    if (this.training && !this.tutorial.allowDown) { p.hull = 40; return; }
     p.downed = true;
     p.reviveT = 0;
     p.boosting = false;
@@ -485,9 +509,57 @@ class Game {
     if (this.state === 'title') this.updateTitle(rawDt);
     else this.updateGame(dt, rawDt);
 
-    this.track.beaconMat.color.setScalar(Math.sin(this.time * 3) > 0.6 ? 8 : 0.4).multiply(_red);
+    this.track.beaconMat.color.setScalar(1.2 + Math.sin(this.time * 2) * 0.8).multiply(_red);
     this.render();
     this.input.endFrame();
+  }
+
+  openMenu() {
+    this.menuOpen = true;
+    this.menuT = 0.35;
+    let trained = false;
+    try { trained = localStorage.getItem('tether.trained') === '1'; } catch (e) { /* ignore */ }
+    this.menuSel = trained ? 1 : 0;
+    document.getElementById('title').classList.add('menu');
+    this._renderMenu();
+  }
+
+  _renderMenu() {
+    document.querySelectorAll('#modes .mode').forEach((el, i) => el.classList.toggle('sel', i === this.menuSel));
+  }
+
+  // returns true if a run was started
+  updateMenu(dt) {
+    const input = this.input;
+    this.menuT -= dt;
+    const devs = this.slots.filter((d) => d && d !== 'ai');
+    let move = 0;
+    for (const d of devs) {
+      if (d.startsWith('pad')) {
+        const i = +d.slice(3);
+        const p = input.pad(i);
+        const y = p ? p.axes[1] || 0 : 0;
+        const prev = this._menuAxis?.[i] || 0;
+        if (y < -0.6 && prev >= -0.6) move = -1;
+        if (y > 0.6 && prev <= 0.6) move = 1;
+        (this._menuAxis ||= {})[i] = y;
+        if (input.padPressed(i, 12)) move = -1;
+        if (input.padPressed(i, 13)) move = 1;
+      }
+    }
+    if (input.keyPressed(['KeyW', 'ArrowUp'])) move = -1;
+    if (input.keyPressed(['KeyS', 'ArrowDown'])) move = 1;
+    if (move) {
+      this.menuSel = (this.menuSel + move + 2) % 2;
+      this.audio.beep(520, 0.05, 0.06);
+      this._renderMenu();
+    }
+    if (this.menuT <= 0 && devs.some((d) => input.pressed(d, 'confirm') || input.startPressed(d))) {
+      this.audio.beep(880, 0.12, 0.1);
+      this.startRun(this.menuSel === 0);
+      return true;
+    }
+    return false;
   }
 
   updateTitle(dt) {
@@ -509,16 +581,15 @@ class Game {
       }
     }
     const joined = this.slots.filter(Boolean).length;
-    if (joined === 2) {
-      if (this.joinT < 0) this.joinT = 0.7;
-      this.joinT -= dt;
-      if (this.joinT <= 0) this.startRun();
-    } else if (joined === 1 && (this.input.keyPressed(['KeyP', 'Escape']) || this.input.pads.some((p) => p && this.input.padPressed(p.index, 9)))) {
-      const free = this.slots.indexOf(null);
-      this.slots[free] = 'ai';
-      this.startRun();
-      return;
-    }
+    if (!this.menuOpen) {
+      if (joined === 2) this.openMenu();
+      else if (joined === 1 && (this.input.keyPressed(['KeyP', 'Escape']) || this.input.pads.some((p) => p && this.input.padPressed(p.index, 9)))) {
+        const free = this.slots.indexOf(null);
+        this.slots[free] = 'ai';
+        this._renderSlots();
+        this.openMenu();
+      }
+    } else if (this.updateMenu(dt)) return;
     // attract-mode flythrough
     this.titleS += 70 * dt;
     if (this.titleS > 5000) this.titleS = 900;
@@ -555,6 +626,7 @@ class Game {
       if (anyStart) {
         this.paused = !this.paused;
         document.getElementById('pause').classList.toggle('on', this.paused);
+        document.getElementById('pause').classList.toggle('training', this.training);
         this.audio.setMusic(true, this.audio.intensity, this.paused);
       }
       if (this.paused) {
@@ -563,6 +635,7 @@ class Game {
         if (pressedPad(0) || input.keyPressed(['Space', 'Enter'])) { this.paused = false; document.getElementById('pause').classList.remove('on'); this.audio.setMusic(true, this.audio.intensity, false); }
         else if (pressedPad(2) || input.keyPressed(['KeyR'])) { this.stats.retries++; this.startFromCheckpoint(this.checkpoint); }
         else if (pressedPad(1) || input.keyPressed(['KeyQ'])) this.enterTitle();
+        else if (this.training && (pressedPad(3) || input.keyPressed(['KeyT']))) this.finishTraining();
         return;
       }
     }
@@ -634,11 +707,11 @@ class Game {
       if (!this.extraction) this.world.setMood(sec.id);
       if (sec.id !== 'hangar') {
         this.checkpoint = sec.id;
-        if (!first || this.checkpoint !== 'hangar') this.hud.banner_(sec.name, sec.subtitle);
+        if (!this.training && (!first || this.checkpoint !== 'hangar')) this.hud.banner_(sec.name, sec.subtitle);
         if (!first) this.audio.sweep();
         for (const p of P) if (!p.downed) p.hull = Math.max(p.hull, 70);
       }
-      this.collapseActive = ['trench', 'undercity', 'collapse'].includes(sec.id);
+      this.collapseActive = !this.training && ['trench', 'undercity', 'collapse'].includes(sec.id);
     }
     // events
     while (this.state === 'play' && this.eventIdx < this.events.length && this.sRef >= this.events[this.eventIdx].s) {
@@ -658,6 +731,7 @@ class Game {
     this.weapons.update(dt, this);
     this.boss.update(dt, this);
     FX.update(dt);
+    if (this.training) this.tutorial.update(dt);
 
     // combo decay
     if (this.comboT > 0) { this.comboT -= dt; if (this.comboT <= 0) this.combo = 0; }
@@ -849,8 +923,8 @@ class Game {
   _buildGates() {
     this.gateMeshes = [];
     const emitMat = new THREE.MeshStandardMaterial({ color: 0x222428, metalness: 0.8, roughness: 0.4, emissive: 0xff2000, emissiveIntensity: 0.5 });
-    const beamMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(12, 0.8, 0.3), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false });
-    const glowMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(2, 0.12, 0.05), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false });
+    const beamMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(3, 0.25, 0.1), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false });
+    const glowMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(0.6, 0.04, 0.02), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false });
     for (let i = 0; i < 4; i++) {
       const g = new THREE.Group();
       const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 1, 6), beamMat);
@@ -977,11 +1051,11 @@ class Game {
     if (this.collapseDist < 220) {
       this.wallBoomT -= dt;
       if (this.wallBoomT <= 0) {
-        this.wallBoomT = 0.06 + this.collapseDist / 1500;
+        this.wallBoomT = 0.45 + this.collapseDist / 400;
         const s = this.collapseS + rand(-5, 40);
         const hw = this.track.hw(s);
         this.track.toWorld(s, randSign() * (hw + rand(0, 6)), rand(3, 45), _v);
-        FX.explosion(_v, rand(1.5, 3));
+        FX.explosion(_v, rand(1.2, 2));
         if (Math.random() < 0.3) this.audio.explode(1.6);
         // debris hurled forward overhead
         this.track.sample(s, _fr);
@@ -1003,15 +1077,15 @@ class Game {
   _collapseSetPiece(dt) {
     this.rockT -= dt;
     if (this.rockT <= 0) {
-      this.rockT = rand(0.5, 1.1);
+      this.rockT = rand(1.1, 1.9);
       this.enemies.spawnRock(this, rand(140, 260));
     }
     // walls detonating ahead
-    if (Math.random() < dt * 2.5) {
-      const s = this.sRef + rand(120, 350);
+    if (Math.random() < dt * 0.5) {
+      const s = this.sRef + rand(150, 350);
       const hw = this.track.hw(s);
       this.track.toWorld(s, randSign() * (hw + 4), rand(15, 70), _v);
-      FX.explosion(_v, rand(2.5, 4));
+      FX.explosion(_v, rand(1.5, 2.2));
       this.audio.explode(0.8);
     }
   }

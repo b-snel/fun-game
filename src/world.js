@@ -155,7 +155,7 @@ export class World {
     this.rainUniforms.uCenter.value.copy(center);
     this.rainUniforms.uVel.value.copy(vel);
     this.rainUniforms.uTime.value = time;
-    this.rainUniforms.uAlpha.value = this.cur.rain * 0.3;
+    this.rainUniforms.uAlpha.value = this.cur.rain * 0.18;
     this.rain.visible = this.cur.rain > 0.01;
   }
 }

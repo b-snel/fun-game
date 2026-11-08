@@ -32,8 +32,8 @@ const MINE_GEO = new THREE.IcosahedronGeometry(1.2, 0);
 const ROCK_GEO = new THREE.DodecahedronGeometry(1, 0);
 
 const DRONE_MAT = new THREE.MeshStandardMaterial({ color: 0x24272c, metalness: 0.9, roughness: 0.3, flatShading: true });
-const EYE_MAT = new THREE.MeshBasicMaterial({ color: new THREE.Color(10, 0.8, 0.4) });
-const EYE_MAT_CHARGER = new THREE.MeshBasicMaterial({ color: new THREE.Color(10, 6, 0.4) });
+const EYE_MAT = new THREE.MeshBasicMaterial({ color: new THREE.Color(3, 0.3, 0.15) });
+const EYE_MAT_CHARGER = new THREE.MeshBasicMaterial({ color: new THREE.Color(3, 1.8, 0.15) });
 const MINE_MAT = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, metalness: 0.8, roughness: 0.4, emissive: 0xff1a00, emissiveIntensity: 1, flatShading: true });
 const ROCK_MAT = new THREE.MeshStandardMaterial({ color: 0x3d3835, roughness: 0.95, flatShading: true, emissive: 0x401000, emissiveIntensity: 0.4 });
 
@@ -48,7 +48,7 @@ export class Enemies {
     this.fr = makeFrame();
     // warning rings for falling hazards
     this.ringGeo = new THREE.RingGeometry(0.85, 1, 32).rotateX(-Math.PI / 2);
-    this.ringMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(6, 0.6, 0.2), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+    this.ringMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(1.6, 0.2, 0.06), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
   }
 
   clear() {
@@ -249,7 +249,7 @@ export class Enemies {
       e.mesh.scale.setScalar((e.kind === 'charger' ? 0.8 : 1) * sc);
 
       // firing
-      if (near && game.controlsLive) {
+      if (near && game.controlsLive && !game.training) {
         const ahead = e.s - near.s;
         e.fireCd -= dt;
         if (e.fireCd <= 0 && ahead > 15 && ahead < 200) {

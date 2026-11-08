@@ -213,7 +213,7 @@ export const FX = {
     this.debrisMax = 240;
     this.debris = new THREE.InstancedMesh(
       new THREE.TetrahedronGeometry(0.5, 0),
-      new THREE.MeshStandardMaterial({ color: 0x1c1c1e, roughness: 0.6, metalness: 0.7, emissive: 0xff5a1a, emissiveIntensity: 0.6 }),
+      new THREE.MeshStandardMaterial({ color: 0x1c1c1e, roughness: 0.6, metalness: 0.7, emissive: 0xff5a1a, emissiveIntensity: 0.25 }),
       this.debrisMax
     );
     this.debris.frustumCulled = false;
@@ -257,29 +257,29 @@ export const FX = {
     for (let i = 0; i < n; i++) {
       _v.set(dir.x + rand(-spread, spread), dir.y + rand(-spread, spread), dir.z + rand(-spread, spread)).normalize().multiplyScalar(speed * rand(0.4, 1.2));
       if (base) _v.add(base);
-      this.sparks.spawn(p.x, p.y, p.z, _v.x, _v.y, _v.z, color.r, color.g, color.b, rand(0.25, 0.6), rand(0.2, 0.55), { drag: 2.5, grav: 25 });
+      this.sparks.spawn(p.x, p.y, p.z, _v.x, _v.y, _v.z, color.r * 0.4, color.g * 0.4, color.b * 0.4, rand(0.2, 0.45), rand(0.2, 0.45), { drag: 2.5, grav: 25 });
     }
   },
 
   explosion(p, scale = 1, baseVel = null, hue = 'fire') {
     const bv = baseVel || _zv;
     const fire = hue === 'fire';
-    const c1 = fire ? [6, 2.6, 0.8] : [1.5, 4, 8];
-    const c2 = fire ? [4, 0.9, 0.2] : [0.6, 1.5, 6];
+    const c1 = fire ? [1.8, 0.8, 0.25] : [0.5, 1.2, 2.4];
+    const c2 = fire ? [1.2, 0.3, 0.07] : [0.2, 0.5, 1.8];
     // flash
-    this.sparks.spawn(p.x, p.y, p.z, bv.x, bv.y, bv.z, 5, 3.5, 2, Math.min(24, 12 * scale), 0.15, { drag: 0 });
+    this.sparks.spawn(p.x, p.y, p.z, bv.x, bv.y, bv.z, 1.5, 1.1, 0.6, Math.min(14, 7 * scale), 0.12, { drag: 0 });
     // fireball
-    const nFire = (30 * scale) | 0;
+    const nFire = (12 * scale) | 0;
     for (let i = 0; i < nFire; i++) {
       _v.randomDirection().multiplyScalar(rand(4, 22) * scale);
       const c = Math.random() < 0.5 ? c1 : c2;
       this.sparks.spawn(p.x + _v.x * 0.05, p.y + _v.y * 0.05, p.z + _v.z * 0.05, _v.x + bv.x, _v.y + bv.y, _v.z + bv.z, c[0], c[1], c[2], rand(2.5, 6) * scale, rand(0.35, 0.9), { drag: 3.5, grow: 1.2 });
     }
     // sparks
-    const nS = (60 * scale) | 0;
+    const nS = (22 * scale) | 0;
     for (let i = 0; i < nS; i++) {
       _v.randomDirection().multiplyScalar(rand(20, 90) * Math.sqrt(scale));
-      this.sparks.spawn(p.x, p.y, p.z, _v.x + bv.x, _v.y + bv.y, _v.z + bv.z, 6, 3.4, 1.4, rand(0.25, 0.55), rand(0.4, 1.1), { drag: 1.6, grav: 30 });
+      this.sparks.spawn(p.x, p.y, p.z, _v.x + bv.x, _v.y + bv.y, _v.z + bv.z, 2, 1.1, 0.45, rand(0.2, 0.45), rand(0.3, 0.8), { drag: 1.6, grav: 30 });
     }
     // smoke
     const nSm = (14 * scale) | 0;
@@ -289,7 +289,7 @@ export const FX = {
       this.smoke.spawn(p.x, p.y, p.z, _v.x + bv.x * 0.9, _v.y + bv.y * 0.9 + 3, _v.z + bv.z * 0.9, g, g, g * 1.05, rand(4, 8) * scale, rand(1.2, 2.2), { drag: 1.2, grow: 2.2, alpha: 0.75 });
     }
     // debris
-    const nD = Math.min(20, (8 * scale) | 0);
+    const nD = Math.min(10, (4 * scale) | 0);
     for (let i = 0; i < nD; i++) {
       const d = this.debrisData[this.debrisCursor];
       this.debrisCursor = (this.debrisCursor + 1) % this.debrisMax;
@@ -299,7 +299,7 @@ export const FX = {
       d.life = rand(1.2, 2.4);
       d.s = rand(0.5, 1.6) * Math.sqrt(scale);
     }
-    this.light(p, fire ? 0xff7a30 : 0x60a0ff, Math.min(1600, 500 * scale), 0.4 + 0.15 * scale);
+    this.light(p, fire ? 0xff7a30 : 0x60a0ff, Math.min(500, 150 * scale), 0.35 + 0.1 * scale);
     this.shell(p, fire ? 0xff9050 : 0x80c0ff, 14 * scale, 0.45);
   },
 
@@ -319,7 +319,7 @@ export const FX = {
       if (t >= 1) { m.visible = false; continue; }
       const e = 1 - Math.pow(1 - t, 3);
       m.scale.setScalar(m.userData.r * (0.2 + e));
-      m.material.uniforms.uA.value = (1 - t) * 3;
+      m.material.uniforms.uA.value = (1 - t) * 0.8;
     }
     for (let i = 0; i < this.debrisMax; i++) {
       const d = this.debrisData[i];
@@ -333,7 +333,7 @@ export const FX = {
       _q.setFromEuler(d.rot);
       _m.compose(d.p, _q, _s.setScalar(d.s * Math.min(1, d.life * 2)));
       this.debris.setMatrixAt(i, _m);
-      if (Math.random() < 0.3) this.sparks.spawn(d.p.x, d.p.y, d.p.z, 0, 0, 0, 3, 1.2, 0.3, 0.8, 0.25, { drag: 0 });
+      if (Math.random() < 0.08) this.sparks.spawn(d.p.x, d.p.y, d.p.z, 0, 0, 0, 1, 0.4, 0.1, 0.6, 0.2, { drag: 0 });
     }
     this.debris.instanceMatrix.needsUpdate = true;
   },
