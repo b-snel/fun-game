@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>TETHER</title>
+<meta name="description" content="Split-screen co-op anti-grav combat racer. Two pilots, one tether." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet" />
+<style>
+  :root { --p1: #38d9ff; --p2: #ff8c1f; --red: #ff3b2f; --fg: #e8edf2; --dim: rgba(232, 237, 242, 0.55); }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; color: var(--fg);
+    font-family: 'Chakra Petch', 'Rajdhani', system-ui, sans-serif; user-select: none; cursor: none; }
+  canvas { display: block; }
+  #hud { position: fixed; inset: 0; pointer-events: none; display: none; }
+  #divider { position: fixed; left: 0; right: 0; top: 50%; height: 3px; margin-top: -1px; background: #000; display: none; z-index: 2;
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.06); }
+  #hud.vertical ~ #divider, body.vsplit #divider { top: 0; bottom: 0; left: 50%; right: auto; width: 3px; height: auto; margin: 0 0 0 -1px; }
+  .view { position: absolute; overflow: hidden; --pc: var(--p1); }
+  .ptag { position: absolute; left: 22px; top: 16px; font: 700 15px 'Chakra Petch'; letter-spacing: 3px; color: var(--pc);
+    text-shadow: 0 0 12px var(--pc); }
+  .reticle { position: absolute; left: 0; top: 0; width: 0; height: 0; }
+  .reticle b { position: absolute; width: 10px; height: 2px; background: var(--pc); box-shadow: 0 0 6px var(--pc); opacity: 0.8; }
+  .reticle b:nth-child(1) { left: -18px; top: -1px; } .reticle b:nth-child(2) { left: 8px; top: -1px; }
+  .reticle b:nth-child(3) { left: -1px; top: -18px; width: 2px; height: 10px; } .reticle b:nth-child(4) { left: -1px; top: 8px; width: 2px; height: 10px; }
+  .lock { position: absolute; left: -22px; top: -22px; width: 44px; height: 44px; border: 2px solid var(--red); display: none;
+    box-shadow: 0 0 10px rgba(255,59,47,0.6); clip-path: polygon(0 0, 30% 0, 30% 6%, 6% 6%, 6% 30%, 0 30%, 0 70%, 6% 70%, 6% 94%, 30% 94%, 30% 100%, 70% 100%, 70% 94%, 94% 94%, 94% 70%, 100% 70%, 100% 30%, 94% 30%, 94% 6%, 70% 6%, 70% 0, 100% 0, 100% 100%, 0 100%);
+    margin-left: 0; animation: lockspin 0.25s ease-out; }
+  @keyframes lockspin { from { transform: scale(1.8); opacity: 0; } }
+  .partner { position: absolute; left: 0; top: 0; display: none; }
+  .partner .dia { position: absolute; left: -7px; top: -7px; width: 14px; height: 14px; border: 2px solid var(--other); transform: rotate(45deg); box-shadow: 0 0 10px var(--other); }
+  .partner span { position: absolute; left: 14px; top: -10px; white-space: nowrap; font: 700 13px 'Chakra Petch'; color: var(--other); letter-spacing: 1px; text-shadow: 0 0 6px rgba(0,0,0,0.9); }
+  .partner.down .dia, .parrow.down div { border-color: var(--red); animation: blink 0.4s infinite; }
+  .partner.down span { color: var(--red); }
+  .parrow { position: absolute; left: 0; top: 0; display: none; }
+  .parrow div { position: absolute; left: -12px; top: -12px; width: 24px; height: 24px; border-top: 3px solid var(--other); border-right: 3px solid var(--other); border-radius: 2px; transform-origin: 50% 50%; }
+  .parrow div { clip-path: none; }
+  .parrow span { position: absolute; left: -12px; top: 16px; font: 700 12px 'Chakra Petch'; color: var(--other); }
+  .view:nth-of-type(1) { --other: var(--p2); }
+  .view:nth-of-type(2) { --other: var(--p1); }
+  .bars { position: absolute; left: 22px; bottom: 18px; width: min(260px, 32%); display: grid; grid-template-columns: 52px 1fr; gap: 6px 10px; align-items: center; }
+  .lbl { font: 600 11px 'Chakra Petch'; letter-spacing: 2px; color: var(--dim); }
+  .bar { position: relative; height: 8px; background: rgba(255,255,255,0.08); transform: skewX(-20deg); overflow: hidden; }
+  .bar > div { height: 100%; width: 100%; background: var(--fg); transition: width 0.12s; }
+  .bar.hull > div { background: linear-gradient(90deg, #cfd8e0, #fff); }
+  .bar.hull > div.low { background: var(--red); animation: blink 0.5s infinite; }
+  .bar.energy > div { background: var(--pc); opacity: 0.55; box-shadow: 0 0 10px var(--pc); }
+  .bar.energy > div.ok { opacity: 1; }
+  .bar .mark { position: absolute; left: 30%; top: 0; bottom: 0; width: 2px; background: rgba(0,0,0,0.6); }
+  .speed { position: absolute; right: 24px; bottom: 12px; text-align: right; line-height: 0.9; }
+  .speed b { display: block; font: 700 52px 'Rajdhani'; letter-spacing: -1px; font-variant-numeric: tabular-nums; }
+  .speed small { font: 600 11px 'Chakra Petch'; letter-spacing: 3px; color: var(--dim); }
+  .view.boosting .speed b { color: var(--pc); text-shadow: 0 0 18px var(--pc); }
+  .tether { position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%); font: 600 12px 'Chakra Petch'; letter-spacing: 3px; white-space: nowrap; }
+  .tether.ok { color: var(--dim); }
+  .tether.strain { color: var(--red); animation: blink 0.25s infinite; }
+  .tether.off { color: #ffcf40; animation: blink 0.6s infinite; }
+  .syncready { position: absolute; left: 50%; bottom: 36px; transform: translateX(-50%); font: 700 11px 'Chakra Petch'; letter-spacing: 4px;
+    color: #fff; opacity: 0; transition: opacity 0.3s; text-shadow: 0 0 10px #fff; }
+  .syncready.on { opacity: 0.75; }
+  .pops { position: absolute; left: 50%; top: 34%; width: 0; }
+  .pop { position: absolute; left: 0; transform: translateX(-50%); white-space: nowrap; font: 700 22px 'Chakra Petch'; letter-spacing: 2px;
+    animation: pop 1.3s ease-out forwards; text-shadow: 0 0 12px rgba(0,0,0,0.8); }
+  .pop.sev { color: #fff; text-shadow: 0 0 18px var(--p1), 0 0 30px var(--p2); font-size: 28px; }
+  .pop.warn { color: var(--red); }
+  .pop.good { color: #8dff9a; }
+  .pop.small { font-size: 16px; color: var(--dim); }
+  @keyframes pop { 0% { transform: translate(-50%, 10px) scale(1.4); opacity: 0; } 12% { transform: translate(-50%, 0) scale(1); opacity: 1; }
+    80% { opacity: 1; } 100% { transform: translate(-50%, -50px); opacity: 0; } }
+  .downed { position: absolute; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 10px; }
+  .downed.on { display: flex; }
+  .downed .t1 { font: 700 40px 'Chakra Petch'; letter-spacing: 8px; color: var(--red); animation: blink 0.8s infinite; }
+  .downed .t2 { font: 600 14px 'Chakra Petch'; letter-spacing: 3px; color: var(--fg); }
+  .downed .bar { width: 240px; height: 10px; }
+  .downed .bar > div { background: #8dff9a; width: 0; transition: none; }
+  .vwarn { position: absolute; left: 50%; top: 22%; transform: translateX(-50%); font: 700 16px 'Chakra Petch'; letter-spacing: 4px; color: var(--red);
+    opacity: 0; white-space: nowrap; text-shadow: 0 0 12px rgba(255,59,47,0.7); }
+  .vwarn.on { opacity: 1; animation: blink 0.3s infinite; }
+  .cut { position: absolute; left: 50%; top: 62%; transform: translateX(-50%); display: none; text-align: center; }
+  .cut.on { display: block; }
+  .cut .t { font: 700 14px 'Chakra Petch'; letter-spacing: 4px; color: #9fe0ff; margin-bottom: 6px; }
+  .cut .bar { width: 200px; height: 8px; } .cut .bar > div { background: #9fe0ff; width: 0; transition: none; }
+  .view.hit { animation: hitshake 0.15s; }
+  @keyframes hitshake { 25% { transform: translate(4px, -2px); } 75% { transform: translate(-3px, 2px); } }
+  .center-stats { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); text-align: center; z-index: 3;
+    background: rgba(0,0,0,0.75); padding: 4px 18px 5px; clip-path: polygon(8% 0, 92% 0, 100% 50%, 92% 100%, 8% 100%, 0 50%); min-width: 200px; }
+  #hud.single .center-stats { top: 16px; transform: translateX(-50%); }
+  #hud.vertical .center-stats { top: 16px; transform: translateX(-50%); }
+  .score { font: 700 24px 'Rajdhani'; letter-spacing: 2px; font-variant-numeric: tabular-nums; line-height: 1; }
+  .combo { font: 700 14px 'Chakra Petch'; color: #ffd84a; height: 0; overflow: visible; position: absolute; right: -36px; top: 8px; }
+  .time { font: 600 11px 'Chakra Petch'; letter-spacing: 2px; color: var(--dim); line-height: 1.1; }
+  .collapse { position: absolute; left: 50%; top: calc(50% + 30px); transform: translateX(-50%); font: 700 13px 'Chakra Petch'; letter-spacing: 4px;
+    color: #ffb070; display: none; z-index: 3; text-shadow: 0 0 10px rgba(0,0,0,0.9); }
+  .collapse.danger { color: var(--red); animation: blink 0.25s infinite; font-size: 16px; }
+  #hud.single .collapse, #hud.vertical .collapse { top: 72px; }
+  .banner { position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%); text-align: center; opacity: 0; z-index: 4; pointer-events: none; }
+  .banner.on { animation: banner 3.2s ease-out forwards; }
+  .banner .sub { font: 600 14px 'Chakra Petch'; letter-spacing: 10px; color: var(--dim); }
+  .banner .ttl { font: 700 clamp(40px, 7vw, 96px) 'Chakra Petch'; letter-spacing: 0.35em; padding-left: 0.35em; line-height: 1; text-shadow: 0 0 40px rgba(0,0,0,0.9); }
+  @keyframes banner { 0% { opacity: 0; letter-spacing: 1em; } 12% { opacity: 1; } 75% { opacity: 1; } 100% { opacity: 0; } }
+  .hint { position: absolute; left: 50%; top: calc(50% + 44px); transform: translate(-50%, 0); z-index: 4; text-align: center; white-space: nowrap;
+    font: 600 15px 'Chakra Petch'; letter-spacing: 2px; background: rgba(0,0,0,0.7); padding: 8px 18px; opacity: 0; transition: opacity 0.4s;
+    border-left: 3px solid var(--p1); border-right: 3px solid var(--p2); }
+  #hud.single .hint, #hud.vertical .hint { top: auto; bottom: 90px; }
+  .hint.on { opacity: 1; }
+  .hint b { color: #fff; } .hint k, .glyph { display: inline-block; min-width: 24px; padding: 0 6px; border: 1px solid rgba(255,255,255,0.5); border-radius: 4px; font-size: 12px; margin: 0 2px; }
+  .bossbar { position: absolute; left: 50%; top: 14px; transform: translateX(-50%); text-align: center; display: none; z-index: 3; }
+  #hud:not(.single):not(.vertical) .bossbar { top: calc(50% + 34px); }
+  .bossbar .bname { font: 700 12px 'Chakra Petch'; letter-spacing: 6px; color: var(--red); }
+  .bossbar .segs { display: flex; gap: 6px; justify-content: center; margin: 4px 0; }
+  .bossbar i { width: 54px; height: 8px; background: #9fe0ff; box-shadow: 0 0 10px #9fe0ff; transform: skewX(-20deg); }
+  .bossbar i.dead { background: rgba(255,255,255,0.12); box-shadow: none; }
+  .bossbar .bphase { font: 600 11px 'Chakra Petch'; letter-spacing: 3px; color: var(--dim); }
+  .bossbar .bphase.hot { color: #9fe0ff; animation: blink 0.5s infinite; }
+  .bigmsg { position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%); text-align: center; z-index: 5; opacity: 0;
+    font: 700 clamp(36px, 6vw, 84px) 'Chakra Petch'; letter-spacing: 0.25em; padding-left: 0.25em; text-shadow: 0 0 30px rgba(0,0,0,0.8); }
+  .bigmsg.on { animation: big 1.6s ease-out forwards; }
+  .bigmsg.sync { background: linear-gradient(90deg, var(--p1), #fff, var(--p2)); -webkit-background-clip: text; background-clip: text; color: transparent; text-shadow: none; filter: drop-shadow(0 0 20px rgba(255,255,255,0.5)); }
+  .bigmsg.red { color: var(--red); }
+  .bigmsg.count { font-size: clamp(60px, 12vw, 160px); }
+  @keyframes big { 0% { opacity: 0; transform: translateY(-50%) scale(1.6); } 10% { opacity: 1; transform: translateY(-50%) scale(1); } 75% { opacity: 1; } 100% { opacity: 0; transform: translateY(-50%) scale(0.96); } }
+  @keyframes blink { 50% { opacity: 0.35; } }
+
+  /* overlays */
+  .overlay { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; flex-direction: column; z-index: 10; text-align: center; }
+  .overlay.on { display: flex; }
+  #title { background: radial-gradient(ellipse at center, rgba(0,0,0,0.15), rgba(0,0,0,0.75)); }
+  #title h1 { margin: 0; font: 700 clamp(64px, 14vw, 190px) 'Chakra Petch'; letter-spacing: 0.4em; padding-left: 0.4em; line-height: 0.9;
+    background: linear-gradient(90deg, var(--p1) 0%, #fff 50%, var(--p2) 100%); -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(0 0 30px rgba(255,255,255,0.25)); }
+  #title .tag { font: 600 15px 'Chakra Petch'; letter-spacing: 8px; color: var(--dim); margin: 14px 0 46px; }
+  .slots { display: flex; gap: 28px; }
+  .slot { width: 300px; padding: 18px 20px; background: rgba(0,0,0,0.6); border-top: 3px solid var(--c); text-align: left; }
+  .slot .who { font: 700 30px 'Chakra Petch'; color: var(--c); letter-spacing: 4px; }
+  .slot .dev { font: 600 13px 'Chakra Petch'; letter-spacing: 2px; margin-top: 4px; min-height: 18px; }
+  .slot .st { font: 600 12px 'Chakra Petch'; letter-spacing: 2px; color: var(--dim); margin-top: 8px; }
+  .slot.joined .st { color: #8dff9a; }
+  .slot:not(.joined) .who { animation: blink 1.2s infinite; }
+  #title .help { margin-top: 34px; font: 500 14px 'Rajdhani'; letter-spacing: 2px; color: var(--dim); line-height: 1.9; }
+  #title .help b { color: var(--fg); }
+  #title .audio { margin-top: 16px; font: 600 12px 'Chakra Petch'; letter-spacing: 3px; color: #ffcf40; }
+  #results { background: rgba(0,0,0,0.78); }
+  #results h2 { font: 700 clamp(40px, 6vw, 80px) 'Chakra Petch'; letter-spacing: 0.3em; margin: 0 0 8px; padding-left: 0.3em; }
+  #results .rank { font: 700 140px 'Chakra Petch'; line-height: 1; background: linear-gradient(180deg, #fff, #9fe0ff); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  #results table { margin: 18px auto; border-collapse: collapse; font: 600 16px 'Chakra Petch'; letter-spacing: 2px; }
+  #results td { padding: 5px 22px; text-align: left; } #results td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+  #results .cont, #fail .cont, #pause .cont { margin-top: 26px; font: 600 14px 'Chakra Petch'; letter-spacing: 4px; color: var(--dim); animation: blink 1.4s infinite; }
+  #fail h2 { font: 700 clamp(40px, 7vw, 96px) 'Chakra Petch'; letter-spacing: 0.3em; color: var(--red); margin: 0; padding-left: 0.3em; }
+  #fail { background: rgba(10,0,0,0.55); }
+  #pause { background: rgba(0,0,0,0.7); }
+  #pause h2 { font: 700 60px 'Chakra Petch'; letter-spacing: 0.3em; margin: 0; }
+  #pause .opts { font: 600 16px 'Chakra Petch'; letter-spacing: 3px; line-height: 2.2; margin-top: 20px; }
+  #loading { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; font: 600 14px 'Chakra Petch'; letter-spacing: 6px; color: var(--dim); background: #000; z-index: 20; }
+</style>
+</head>
+<body>
+  <div id="loading">BUILDING THE TRENCH…</div>
+  <div id="hud"></div>
+  <div id="divider"></div>
+  <div id="title" class="overlay">
+    <h1>TETHER</h1>
+    <div class="tag">TWO PILOTS · ONE LIFELINE · NO BRAKES</div>
+    <div class="slots">
+      <div class="slot" id="slot0" style="--c: var(--p1)"><div class="who">P1</div><div class="dev"></div><div class="st">PRESS <span class="glyph">A</span> / SPACE TO JOIN</div></div>
+      <div class="slot" id="slot1" style="--c: var(--p2)"><div class="who">P2</div><div class="dev"></div><div class="st">PRESS <span class="glyph">A</span> / ENTER TO JOIN</div></div>
+    </div>
+    <div class="help">
+      <b>LEFT STICK</b> FLY &nbsp;·&nbsp; <b>RT</b> FIRE &nbsp;·&nbsp; <b>A</b> BOOST &nbsp;·&nbsp; <b>B</b> BARREL ROLL &nbsp;·&nbsp; <b>LT</b> AIR-BRAKE<br />
+      THE TETHER BETWEEN YOU <b>SLICES ENEMIES</b> AND <b>BLOCKS FIRE</b> · BOOST TOGETHER FOR A <b>SYNC BURST</b><br />
+      KEYBOARD P1: <b>WASD</b> · F FIRE · SHIFT BOOST · R ROLL · Q BRAKE &nbsp;|&nbsp; P2: <b>ARROWS</b> · / FIRE · . BOOST · , ROLL · M BRAKE<br />
+      ONE PLAYER? JOIN, THEN PRESS <b>START</b> / <b>P</b> TO FLY WITH AN AI WINGMAN &nbsp;·&nbsp; <b>Y</b> / I INVERT · <b>VIEW</b> / TAB SPLIT
+    </div>
+    <div class="audio" id="audioNote">CLICK OR PRESS ANY KEY TO ENABLE AUDIO</div>
+  </div>
+  <div id="results" class="overlay"></div>
+  <div id="fail" class="overlay"><h2>SIGNAL LOST</h2><div class="cont">PRESS <span class="glyph">A</span> / SPACE TO RETRY FROM CHECKPOINT</div></div>
+  <div id="pause" class="overlay"><h2>PAUSED</h2><div class="opts"><span class="glyph">A</span> RESUME &nbsp; <span class="glyph">X</span> / R RESTART CHECKPOINT &nbsp; <span class="glyph">B</span> / Q QUIT TO TITLE</div></div>
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
